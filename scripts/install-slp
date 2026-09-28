@@ -33,6 +33,7 @@ FILES = [
     (".kiro/agents/room-peer.json", None, True, False),
 ]
 PROVIDERS_TEMPLATE = REPO / "paseo" / "room-providers.json.template"
+PROFILES = REPO / "paseo" / "room-profiles.json"
 PASEO_CONFIG = HOME / ".paseo" / "config.json"
 REQUIRED_BINS = ["codex", "claude", "kiro-cli"]
 # Providers that must not receive Paseo orchestration tools once injection is on.
@@ -89,6 +90,17 @@ def main() -> None:
         if "paseoTools" not in entry:
             print(f"{'set' if apply else 'would set'}  paseo provider {provider_id} paseoTools.enabled = false")
             entry["paseoTools"] = {"enabled": False}
+    profiles = config.setdefault("daemon", {}).setdefault("agentProfiles", [])
+    for profile in json.loads(PROFILES.read_text()):
+        idx = next((i for i, p in enumerate(profiles) if p.get("id") == profile["id"]), None)
+        if idx is not None and profiles[idx] == profile:
+            print(f"unchanged  paseo profile {profile['id']}")
+            continue
+        print(f"{'' if apply else 'would '}{'update' if idx is not None else 'add'}  paseo profile {profile['id']}")
+        if idx is None:
+            profiles.append(profile)
+        else:
+            profiles[idx] = profile
     mcp = config.setdefault("daemon", {}).setdefault("mcp", {})
     if mcp.get("enabled") is not True or mcp.get("injectIntoAgents") is not True:
         print(f"{'set' if apply else 'would set'}  daemon.mcp.enabled/injectIntoAgents = true")

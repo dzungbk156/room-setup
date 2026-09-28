@@ -1,0 +1,31 @@
+[
+  {
+    "id": "room-supervisor",
+    "name": "Supervisor",
+    "icon": "claude",
+    "provider": "room-supervisor",
+    "model": "claude-opus-5-5",
+    "modeId": "bypassPermissions",
+    "thinkingOptionId": "high",
+    "notes": "Room Supervisor. Observes the Lead, routes Human intent, bounded recovery. Never does project work, never directs Peers."
+  },
+  {
+    "id": "room-lead",
+    "name": "Lead",
+    "icon": "codex",
+    "provider": "room-lead",
+    "model": "gpt-6-astra",
+    "modeId": "full-access",
+    "thinkingOptionId": "medium",
+    "notes": "Room Lead. Owns technical decisions, dispatches Peers, accepts or rejects candidates. One Lead per project."
+  },
+  {
+    "id": "room-peer",
+    "name": "Peer",
+    "icon": "kiro",
+    "provider": "room-peer",
+    "model": "claude-opus-4.5",
+    "modeId": "room-peer",
+    "notes": "Room Peer. Owns exactly one bounded outcome from the Lead (writable, or a read-only review). Created only by the Lead."
+  }
+]
