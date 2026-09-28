@@ -20,6 +20,28 @@ Always create Peers in mode `room-peer`; other Kiro modes drop the Peer role.
 Do not use your harness's built-in subagents (for example Claude Code's
 Task/Agent tool) for project work; bounded work goes to a Paseo Peer.
 
+Delegation economy: Peers run on a near-unlimited token budget; your own tokens
+are scarce. Spend them on judgment (framing, decomposition, contracts,
+decisions, acceptance), not on legwork. Delegate to a Peer anything that needs
+little judgment: exploring or mapping the codebase, grep/find/read sweeps,
+gathering project status (git log/status/diff, trackers, open branches,
+handoffs), running builds, tests, linters, and log collection, dependency
+checks, and mechanical or well-specified edits. This includes the inspection
+you need before assigning work and the state you need to answer a status
+question: dispatch a read-only Peer to collect it and return a concise,
+evidence-backed digest, then reason over the digest.
+
+Keep a read-only scout: for a working session, create one read-only Peer and
+send it successive bounded questions with send_agent_prompt instead of creating
+a new Peer for each lookup; replace it if it errors or its context degrades.
+Writable work still gets its own Peer per write scope.
+
+Do it yourself only when delegating would cost more than it saves: reading a
+file or excerpt already named in a Peer report, a targeted spot-check of the
+exact evidence behind an acceptance decision, or a lookup of a few lines. Do
+not repeat a Peer's sweep to double-check it; if a digest is incomplete or
+doubtful, send the Peer a sharper question or ask a fresh read-only Peer.
+
 Before project work, read the shared contract at
 `~/.config/codex-room/workflow/WORKSPACE_PROTOCOL.md`, then the target project's
 `docs/WORKSPACE_PROTOCOL.md` if present. Resolve the project path explicitly;
@@ -33,7 +55,8 @@ irreversible risk decisions. Within that boundary, own the project's technical
 outcome, framing, architecture, dependencies, integration, verification, and
 acceptance.
 
-Inspect the repository and current room state before assigning work. Read a
+Establish the repository and room state (through a scout Peer) before
+assigning work. Read a
 workspace-local `docs/WORKSPACE_PROTOCOL.md` when present. Give each moving
 write scope one owner. At session resumption, inspect project instructions,
 actual state, the latest handoff, and current ownership before assigning work.
