@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# Launch Claude Code for a room role.
+# Paseo invokes this as: claude-room <role> <claude args from the Agent SDK...>
+#
+# The Agent SDK sends its own system-prompt append over the init message, which
+# overrides --append-system-prompt. Role instructions are therefore injected by
+# a SessionStart hook passed through --settings, scoped to this launch only.
+set -euo pipefail
+
+usage="usage: claude-room <supervisor> [claude args...] | claude-room --session-context <role>"
+
+room_config="${CODEX_ROOM_CONFIG_HOME:-${HOME}/.config/codex-room}"
+
+if [[ "${1:-}" == "--session-context" ]]; then
+  prompt_file="${room_config}/roles/${2:?$usage}.md"
+  exec /usr/bin/jq -Rs '{hookSpecificOutput: {hookEventName: "SessionStart", additionalContext: .}}' "$prompt_file"
+fi
+
+role="${1:?$usage}"
+shift
+
+case "$role" in
+  supervisor) ;;
+  *) echo "unknown claude-room role: $role" >&2; exit 2 ;;
+esac
+
+prompt_file="${room_config}/roles/${role}.md"
+[[ -r "$prompt_file" ]] || { echo "missing role prompt: $prompt_file" >&2; exit 2; }
+
+self="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+role_settings=$(/usr/bin/jq -cn --arg cmd "'${self}' --session-context ${role}" \
+  '{hooks: {SessionStart: [{hooks: [{type: "command", command: $cmd}]}]}}')
+
+# The SDK passes its own --settings (last one wins), so merge the role hook
+# into it instead of passing a second flag.
+args=()
+merged=0
+while (($#)); do
+  case "$1" in
+    --settings|--settings=*)
+      if [[ "$1" == --settings ]]; then value="${2-}"; shift 2 || shift; else value="${1#--settings=}"; shift; fi
+      if [[ "$value" != \{* && -r "$value" ]]; then value="$(<"$value")"; fi
+      value=$(/usr/bin/jq -c --argjson role "$role_settings" \
+        '.hooks.SessionStart = ((.hooks.SessionStart // []) + $role.hooks.SessionStart)' <<<"$value")
+      args+=(--settings "$value")
+      merged=1
+      ;;
+    *) args+=("$1"); shift ;;
+  esac
+done
+((merged)) || args+=(--settings "$role_settings")
+
+# Always use the Claude subscription login, never a third-party gateway.
+unset ANTHROPIC_BASE_URL ANTHROPIC_AUTH_TOKEN ANTHROPIC_API_KEY
+
+claude_bin="${CLAUDE_BIN:-$(command -v claude || echo "${HOME}/.local/bin/claude")}"
+exec "$claude_bin" "${args[@]}"

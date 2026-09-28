@@ -1,0 +1,57 @@
+{
+  "room-supervisor": {
+    "extends": "claude",
+    "label": "Room Supervisor",
+    "description": "Supervisor seat: Claude Code (Anthropic subscription) with room orchestration tools",
+    "command": ["@@HOME@@/.local/bin/claude-room", "supervisor"],
+    "models": [
+      {
+        "id": "claude-opus-5-5",
+        "label": "Opus 5.5",
+        "isDefault": true,
+        "thinkingOptions": [
+          { "id": "high", "label": "High", "isDefault": true },
+          { "id": "medium", "label": "Medium" }
+        ]
+      }
+    ],
+    "paseoTools": { "enabled": true }
+  },
+  "room-lead": {
+    "extends": "codex",
+    "label": "Room Lead",
+    "description": "Lead seat: Codex (ChatGPT subscription) in an isolated Codex Room runtime",
+    "command": ["@@HOME@@/.local/bin/codex-room", "lead"],
+    "params": {
+      "sandbox_mode": "danger-full-access",
+      "approval_policy": "never"
+    },
+    "models": [
+      {
+        "id": "gpt-6-astra",
+        "label": "Astra Medium",
+        "isDefault": true,
+        "thinkingOptions": [
+          { "id": "medium", "label": "Medium", "isDefault": true },
+          { "id": "high", "label": "High" }
+        ]
+      }
+    ],
+    "paseoTools": { "enabled": true }
+  },
+  "room-peer": {
+    "extends": "acp",
+    "label": "Room Peer",
+    "description": "Peer seat: Kiro CLI (Opus 4.5), one bounded outcome, no orchestration tools",
+    "command": [
+      "@@HOME@@/.local/bin/kiro-cli", "acp",
+      "--agent", "room-peer",
+      "--model", "claude-opus-4.5",
+      "--trust-all-tools"
+    ],
+    "models": [
+      { "id": "claude-opus-4.5", "label": "Opus 4.5", "isDefault": true }
+    ],
+    "paseoTools": { "enabled": false }
+  }
+}

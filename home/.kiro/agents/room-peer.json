@@ -1,0 +1,11 @@
+{
+  "name": "room-peer",
+  "description": "Room Peer: owns one bounded outcome delegated by the Lead",
+  "prompt": "file://@@HOME@@/.config/codex-room/roles/peer.md",
+  "model": "claude-opus-4.5",
+  "tools": ["*"],
+  "allowedTools": ["*"],
+  "resources": [
+    "file://@@HOME@@/.config/codex-room/workflow/WORKSPACE_PROTOCOL.md"
+  ]
+}
