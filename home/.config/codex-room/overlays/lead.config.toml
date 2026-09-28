@@ -2,6 +2,7 @@ model = "gpt-6-astra"
 model_reasoning_effort = "medium"
 sandbox_mode = "danger-full-access"
 approval_policy = "never"
+room_user_skills = false
 
 developer_instructions = """
 Room role: Lead.

@@ -43,6 +43,17 @@ self="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]
 role_settings=$(/usr/bin/jq -cn --arg cmd "'${self}' --session-context ${role}" \
   '{hooks: {SessionStart: [{hooks: [{type: "command", command: $cmd}]}]}}')
 
+# Lead seats run without global skills or plugins (their hooks inject context).
+extra_args=()
+if [[ "$role" == lead ]]; then
+  extra_args+=(--disable-slash-commands)
+  user_settings="${CLAUDE_CONFIG_DIR:-${HOME}/.claude}/settings.json"
+  if [[ -r "$user_settings" ]]; then
+    role_settings=$(/usr/bin/jq -c --slurpfile user "$user_settings" \
+      '.enabledPlugins = (($user[0].enabledPlugins // {}) | map_values(false))' <<<"$role_settings")
+  fi
+fi
+
 # The SDK passes its own --settings (last one wins), so merge the role hook
 # into it instead of passing a second flag.
 args=()
@@ -53,7 +64,8 @@ while (($#)); do
       if [[ "$1" == --settings ]]; then value="${2-}"; shift 2 || shift; else value="${1#--settings=}"; shift; fi
       if [[ "$value" != \{* && -r "$value" ]]; then value="$(<"$value")"; fi
       value=$(/usr/bin/jq -c --argjson role "$role_settings" \
-        '.hooks.SessionStart = ((.hooks.SessionStart // []) + $role.hooks.SessionStart)' <<<"$value")
+        '.hooks.SessionStart = ((.hooks.SessionStart // []) + $role.hooks.SessionStart)
+         | .enabledPlugins = ((.enabledPlugins // {}) + ($role.enabledPlugins // {}))' <<<"$value")
       args+=(--settings "$value")
       merged=1
       ;;
@@ -66,4 +78,4 @@ done
 unset ANTHROPIC_BASE_URL ANTHROPIC_AUTH_TOKEN ANTHROPIC_API_KEY
 
 claude_bin="${CLAUDE_BIN:-$(command -v claude || echo "${HOME}/.local/bin/claude")}"
-exec "$claude_bin" "${args[@]}"
+exec "$claude_bin" ${extra_args[@]+"${extra_args[@]}"} ${args[@]+"${args[@]}"}
