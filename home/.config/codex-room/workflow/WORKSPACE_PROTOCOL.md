@@ -117,3 +117,39 @@ material cost, external effects, and irreversible risk.
 Use finish, error, attention, and decision events to advance work. Wait for an
 event instead of repeatedly polling unchanged state. Keep handoffs concise and
 decision-ready; add detail only when it changes the route or acceptance.
+
+## Engineering skills (mattpocock/skills)
+
+The room uses Matt Pocock's engineering skills for its align, plan, build, and
+review loop. These rules adapt them to room authority; where a skill and this
+contract disagree, this contract wins.
+
+- Tracker. Each project runs `setup-matt-pocock-skills` once, with the
+  local-markdown tracker. `docs/agents/issue-tracker.md` then names where
+  tickets live; that tracker is the project's status source. Record tickets,
+  blocking edges, dispositions, and plan changes there, not only in chat. If
+  the file is missing, Lead asks Human to run setup (local markdown) before
+  creating tickets.
+- Align and plan belong to Lead, working directly with Human: `grill-with-docs`
+  (with `grilling` and `domain-modeling`), `to-spec`, `to-tickets`,
+  `wayfinder`, `triage`, `improve-codebase-architecture`, `ask-matt`.
+  Supervisor does not grill Human on a project or write specs or tickets.
+- Build belongs to Peers: `implement`, `tdd`, `diagnosing-bugs`, `prototype`,
+  `resolving-merge-conflicts`, `wizard`, and the reading part of `research`.
+  Peers use `codebase-design` vocabulary and read `CONTEXT.md` and ADRs as
+  consumers; they change them only when the brief grants that scope. Peers do
+  not run Lead-side skills unless the brief asks.
+- Dispatch. A ticket in the ready-for-agent state is a Peer brief. Lead
+  dispatches in blocking-edge order: a ticket is ready only when every blocker
+  is accepted. The brief carries the ticket path, branch or worktree, write
+  scope, and acceptance evidence.
+- Sub-agents. When a skill says to spawn a sub-agent, background agent, or
+  parallel agents: Lead creates Paseo Peers with provider and mode `room-peer`
+  (read-only unless the step writes); a Peer performs those steps itself,
+  sequentially, without spawning agents. Supervisor never spawns them.
+- `implement` commits only to the branch or worktree named in the brief. The
+  commit is a candidate: the Peer reports its hash, base, changed paths, and
+  verification. A Peer's own `code-review` is evidence, not acceptance.
+- `code-review`. Lead runs it by dispatching two fresh read-only Peers against
+  the same fixed point, one for the Standards axis and one for the Spec axis,
+  then reads both reports and explicitly accepts or rejects the candidate.

@@ -43,22 +43,40 @@ self="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]
 role_settings=$(/usr/bin/jq -cn --arg cmd "'${self}' --session-context ${role}" \
   '{hooks: {SessionStart: [{hooks: [{type: "command", command: $cmd}]}]}}')
 
-# Lead seats run without global skills or plugins (plugin hooks inject context),
-# except user skills whose directory matches ROOM_SKILL_ALLOW (default: paseo*).
+# Lead seats run without global skills or plugins (plugin hooks inject context).
+# Allowed skills come from room_user_skills_allow in the lead overlay (shared
+# with the Codex Lead): matching ~/.claude/skills stay on, and matching
+# ~/.agents/skills are exposed through a generated --add-dir skills folder.
+extra_args=()
 if [[ "$role" == lead ]]; then
   claude_home="${CLAUDE_CONFIG_DIR:-${HOME}/.claude}"
   user_settings="${claude_home}/settings.json"
   [[ -r "$user_settings" ]] || user_settings=/dev/null
-  allow="${ROOM_SKILL_ALLOW:-paseo*}"
+  overlay="${room_config}/overlays/lead.config.toml"
+  allow="${ROOM_SKILL_ALLOW:-$(sed -n 's/^room_user_skills_allow *= *"\(.*\)"$/\1/p' "$overlay" 2>/dev/null)}"
+  allow="${allow:-paseo*}"
+  IFS=, read -ra patterns <<<"$allow"
+  allowed() { local p; for p in "${patterns[@]}"; do [[ "$1" == $p ]] && return 0; done; return 1; }
+
   skills_off=$(
     shopt -s nullglob
     for dir in "${claude_home}"/skills/*/; do
-      name=$(basename "$dir"); keep=0
-      IFS=, read -ra patterns <<<"$allow"
-      for pattern in "${patterns[@]}"; do [[ "$name" == $pattern ]] && keep=1; done
-      ((keep)) || printf '%s\n' "$name"
+      name=$(basename "$dir"); allowed "$name" || printf '%s\n' "$name"
     done | /usr/bin/jq -Rn '[inputs | {key: ., value: "off"}] | from_entries'
   )
+
+  lead_skills="${room_config}/runtime/claude-lead/.claude/skills"
+  rm -rf "$lead_skills"; mkdir -p "$lead_skills"
+  shopt -s nullglob
+  for dir in "${HOME}"/.agents/skills/*/; do
+    name=$(basename "$dir")
+    if allowed "$name" && [[ ! -e "${claude_home}/skills/${name}" ]]; then
+      ln -s "${dir%/}" "${lead_skills}/${name}"
+    fi
+  done
+  shopt -u nullglob
+  extra_args+=(--add-dir "${room_config}/runtime/claude-lead")
+
   role_settings=$(/usr/bin/jq -c --slurpfile user <(cat "$user_settings" 2>/dev/null || echo '{}') \
     --argjson off "$skills_off" '
       .enabledPlugins = ((($user[0] // {}).enabledPlugins // {}) | map_values(false))
@@ -92,4 +110,4 @@ done
 unset ANTHROPIC_BASE_URL ANTHROPIC_AUTH_TOKEN ANTHROPIC_API_KEY
 
 claude_bin="${CLAUDE_BIN:-$(command -v claude || echo "${HOME}/.local/bin/claude")}"
-exec "$claude_bin" ${args[@]+"${args[@]}"}
+exec "$claude_bin" ${extra_args[@]+"${extra_args[@]}"} ${args[@]+"${args[@]}"}
