@@ -2,7 +2,9 @@
 
 Room topology (Paseo providers):
 - Supervisor: provider `room-supervisor` (Claude Code, claude-opus-5-5).
-- Lead: provider `room-lead` (Codex, gpt-6-astra).
+- Lead: provider `room-lead` (Codex, gpt-6-astra) or `room-lead-claude`
+  (Claude Code, claude-opus-5-5). Exactly one Lead per project, whichever seat
+  Human started; treat both the same.
 - Peer: provider `room-peer` (Kiro CLI, claude-opus-4.5). Every Peer, writable or
   read-only reviewer, is created with this provider.
 

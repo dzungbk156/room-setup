@@ -7,25 +7,37 @@
 # a SessionStart hook passed through --settings, scoped to this launch only.
 set -euo pipefail
 
-usage="usage: claude-room <supervisor> [claude args...] | claude-room --session-context <role>"
+usage="usage: claude-room <supervisor|lead> [claude args...] | claude-room --session-context <role>"
 
 room_config="${CODEX_ROOM_CONFIG_HOME:-${HOME}/.config/codex-room}"
 
+# Print a role's instructions: roles/<role>.md, or the developer_instructions of
+# the role's Codex overlay so a Lead on Claude and on Codex share one source.
+role_text() {
+  local md="${room_config}/roles/$1.md" overlay="${room_config}/overlays/$1.config.toml"
+  if [[ -r "$md" ]]; then
+    cat "$md"
+  elif [[ -r "$overlay" ]]; then
+    /usr/bin/python3 -c 'import re,sys; print(re.search(r"(?ms)^developer_instructions\s*=\s*\"\"\"\n(.*?)^\"\"\"", open(sys.argv[1]).read()).group(1))' "$overlay"
+  else
+    echo "missing role prompt for $1" >&2; return 2
+  fi
+}
+
 if [[ "${1:-}" == "--session-context" ]]; then
-  prompt_file="${room_config}/roles/${2:?$usage}.md"
-  exec /usr/bin/jq -Rs '{hookSpecificOutput: {hookEventName: "SessionStart", additionalContext: .}}' "$prompt_file"
+  role_text "${2:?$usage}" | /usr/bin/jq -Rs '{hookSpecificOutput: {hookEventName: "SessionStart", additionalContext: .}}'
+  exit
 fi
 
 role="${1:?$usage}"
 shift
 
 case "$role" in
-  supervisor) ;;
+  supervisor|lead) ;;
   *) echo "unknown claude-room role: $role" >&2; exit 2 ;;
 esac
 
-prompt_file="${room_config}/roles/${role}.md"
-[[ -r "$prompt_file" ]] || { echo "missing role prompt: $prompt_file" >&2; exit 2; }
+role_text "$role" >/dev/null || exit 2
 
 self="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
 role_settings=$(/usr/bin/jq -cn --arg cmd "'${self}' --session-context ${role}" \

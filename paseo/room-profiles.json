@@ -11,13 +11,23 @@
   },
   {
     "id": "room-lead",
-    "name": "Lead",
+    "name": "Lead (Astra)",
     "icon": "codex",
     "provider": "room-lead",
     "model": "gpt-6-astra",
     "modeId": "full-access",
     "thinkingOptionId": "medium",
     "notes": "Room Lead. Owns technical decisions, dispatches Peers, accepts or rejects candidates. One Lead per project."
+  },
+  {
+    "id": "room-lead-claude",
+    "name": "Lead (Opus)",
+    "icon": "claude",
+    "provider": "room-lead-claude",
+    "model": "claude-opus-5-5",
+    "modeId": "bypassPermissions",
+    "thinkingOptionId": "high",
+    "notes": "Room Lead on Claude Opus 5.5, for demanding projects. Same authority as Lead (Astra); one Lead per project."
   },
   {
     "id": "room-peer",
