@@ -43,15 +43,27 @@ self="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]
 role_settings=$(/usr/bin/jq -cn --arg cmd "'${self}' --session-context ${role}" \
   '{hooks: {SessionStart: [{hooks: [{type: "command", command: $cmd}]}]}}')
 
-# Lead seats run without global skills or plugins (their hooks inject context).
-extra_args=()
+# Lead seats run without global skills or plugins (plugin hooks inject context),
+# except user skills whose directory matches ROOM_SKILL_ALLOW (default: paseo*).
 if [[ "$role" == lead ]]; then
-  extra_args+=(--disable-slash-commands)
-  user_settings="${CLAUDE_CONFIG_DIR:-${HOME}/.claude}/settings.json"
-  if [[ -r "$user_settings" ]]; then
-    role_settings=$(/usr/bin/jq -c --slurpfile user "$user_settings" \
-      '.enabledPlugins = (($user[0].enabledPlugins // {}) | map_values(false))' <<<"$role_settings")
-  fi
+  claude_home="${CLAUDE_CONFIG_DIR:-${HOME}/.claude}"
+  user_settings="${claude_home}/settings.json"
+  [[ -r "$user_settings" ]] || user_settings=/dev/null
+  allow="${ROOM_SKILL_ALLOW:-paseo*}"
+  skills_off=$(
+    shopt -s nullglob
+    for dir in "${claude_home}"/skills/*/; do
+      name=$(basename "$dir"); keep=0
+      IFS=, read -ra patterns <<<"$allow"
+      for pattern in "${patterns[@]}"; do [[ "$name" == $pattern ]] && keep=1; done
+      ((keep)) || printf '%s\n' "$name"
+    done | /usr/bin/jq -Rn '[inputs | {key: ., value: "off"}] | from_entries'
+  )
+  role_settings=$(/usr/bin/jq -c --slurpfile user <(cat "$user_settings" 2>/dev/null || echo '{}') \
+    --argjson off "$skills_off" '
+      .enabledPlugins = ((($user[0] // {}).enabledPlugins // {}) | map_values(false))
+      | .disableBundledSkills = true
+      | .skillOverrides = $off' <<<"$role_settings")
 fi
 
 # The SDK passes its own --settings (last one wins), so merge the role hook
@@ -65,7 +77,9 @@ while (($#)); do
       if [[ "$value" != \{* && -r "$value" ]]; then value="$(<"$value")"; fi
       value=$(/usr/bin/jq -c --argjson role "$role_settings" \
         '.hooks.SessionStart = ((.hooks.SessionStart // []) + $role.hooks.SessionStart)
-         | .enabledPlugins = ((.enabledPlugins // {}) + ($role.enabledPlugins // {}))' <<<"$value")
+         | .enabledPlugins = ((.enabledPlugins // {}) + ($role.enabledPlugins // {}))
+         | .skillOverrides = ((.skillOverrides // {}) + ($role.skillOverrides // {}))
+         | if $role.disableBundledSkills then .disableBundledSkills = true else . end' <<<"$value")
       args+=(--settings "$value")
       merged=1
       ;;
@@ -78,4 +92,4 @@ done
 unset ANTHROPIC_BASE_URL ANTHROPIC_AUTH_TOKEN ANTHROPIC_API_KEY
 
 claude_bin="${CLAUDE_BIN:-$(command -v claude || echo "${HOME}/.local/bin/claude")}"
-exec "$claude_bin" ${extra_args[@]+"${extra_args[@]}"} ${args[@]+"${args[@]}"}
+exec "$claude_bin" ${args[@]+"${args[@]}"}

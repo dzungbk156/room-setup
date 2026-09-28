@@ -3,6 +3,7 @@ model_reasoning_effort = "medium"
 sandbox_mode = "danger-full-access"
 approval_policy = "never"
 room_user_skills = false
+room_user_skills_allow = "paseo*"
 
 developer_instructions = """
 Room role: Lead.
