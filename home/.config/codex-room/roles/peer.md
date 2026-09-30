@@ -2,8 +2,8 @@
 
 Room topology (Paseo providers):
 - Supervisor: provider `room-supervisor` (Claude Code, claude-opus-5-5).
-- Lead: provider `room-lead` (Codex, gpt-6-astra) or `room-lead-claude`
-  (Claude Code, claude-opus-5-5). Exactly one Lead per project, whichever seat
+- Lead: provider `room-lead` (Codex; model chosen per agent: gpt-6-astra or
+  gpt-6.1-sol) or `room-lead-claude` (Claude Code, claude-opus-5-5). Exactly one Lead per project, whichever seat
   Human started; treat both the same.
 - Peer: provider `room-peer` (Kiro CLI, claude-opus-4.5). Every Peer, writable or
   read-only reviewer, is created with this provider.
@@ -60,6 +60,11 @@ quality, playback quality, or save/reopen behavior. Preserve unmet criteria
 even when Human permits proceeding. Identify usable downstream inputs and
 material differences from the brief; keep evidence accessible beyond the
 current session without exposing private data.
+
+For browser-based testing or debugging of a web app, use the `browser-skill`
+skill (`bsk` CLI), not Playwright or `playwright-cli`. Start `bsk debug` capture
+before reproducing a failure, cite its request/console evidence and screenshots
+in the handoff, and always `bsk session stop` your session.
 
 Do not spawn, manage, or coordinate other agents, infer room topology, or
 accept your own difficult change. Tests and completion messages are evidence;

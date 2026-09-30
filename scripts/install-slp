@@ -5,10 +5,15 @@ Supervisor -> Claude Code (claude-room), Lead -> Codex (codex-room),
 Peer -> Kiro CLI (room-peer agent). Does not build or replace Paseo, and does
 not touch ~/.codex, ~/.claude, or Kiro auth. Every replaced file is backed up.
 
-usage: scripts/install-slp [--apply]   (default: dry run)
+usage: scripts/install-slp [--apply] [--force]   (default: dry run)
+
+Installed files edited outside this repo are detected (via a hash manifest of
+the last install) and never overwritten without --force; port such edits into
+home/ first.
 """
 
 import datetime
+import hashlib
 import json
 import os
 import pathlib
@@ -35,6 +40,7 @@ FILES = [
 PROVIDERS_TEMPLATE = REPO / "paseo" / "room-providers.json.template"
 PROFILES = REPO / "paseo" / "room-profiles.json"
 PASEO_CONFIG = HOME / ".paseo" / "config.json"
+MANIFEST = HOME / ".config" / "codex-room" / ".install-slp-manifest.json"
 REQUIRED_BINS = ["codex", "claude", "kiro-cli"]
 # Providers that must not receive Paseo orchestration tools once injection is on.
 NON_ROOM_PROVIDERS = ["claude", "codex", "opencode", "copilot", "pi", "omp", "kiro"]
@@ -44,8 +50,15 @@ def render(text: str) -> str:
     return text.replace("@@HOME@@", str(HOME))
 
 
+def digest(text: str) -> str:
+    return hashlib.sha256(text.encode()).hexdigest()
+
+
 def main() -> None:
     apply = "--apply" in sys.argv[1:]
+    force = "--force" in sys.argv[1:]
+    manifest = json.loads(MANIFEST.read_text()) if MANIFEST.exists() else {}
+    drifted = []
     stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     backup_root = HOME / ".codex-room-backups" / f"slp-{stamp}"
 
@@ -67,8 +80,14 @@ def main() -> None:
         content = src.read_text()
         if do_render:
             content = render(content)
+        key = str(dest.relative_to(HOME))
         if dest.exists() and dest.read_text() == content:
-            print(f"unchanged  ~/{dest.relative_to(HOME)}")
+            print(f"unchanged  ~/{key}")
+            manifest[key] = digest(content)
+            continue
+        if dest.exists() and key in manifest and digest(dest.read_text()) != manifest[key] and not force:
+            print(f"DRIFTED    ~/{key}  (edited since last install; not overwritten)")
+            drifted.append(key)
             continue
         print(f"{'write' if apply else 'would write'}  ~/{dest.relative_to(HOME)}")
         if apply:
@@ -77,6 +96,7 @@ def main() -> None:
             dest.write_text(content)
             if executable:
                 dest.chmod(0o755)
+            manifest[key] = digest(content)
 
     providers = json.loads(render(PROVIDERS_TEMPLATE.read_text()))
     config = json.loads(PASEO_CONFIG.read_text()) if PASEO_CONFIG.exists() else {"version": 1}
@@ -105,7 +125,12 @@ def main() -> None:
     if mcp.get("enabled") is not True or mcp.get("injectIntoAgents") is not True:
         print(f"{'set' if apply else 'would set'}  daemon.mcp.enabled/injectIntoAgents = true")
         mcp.update({"enabled": True, "injectIntoAgents": True})
+    if drifted:
+        print("\nSome installed files were edited outside the repo. Port those edits into"
+              "\nhome/ (diff them against the repo copy), or re-run with --force to overwrite.")
     if apply:
+        MANIFEST.parent.mkdir(parents=True, exist_ok=True)
+        MANIFEST.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
         backup(PASEO_CONFIG)
         PASEO_CONFIG.parent.mkdir(parents=True, exist_ok=True)
         tmp = PASEO_CONFIG.with_suffix(".json.tmp")

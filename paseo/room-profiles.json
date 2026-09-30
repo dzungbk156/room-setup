@@ -20,6 +20,16 @@
     "notes": "Room Lead. Owns technical decisions, dispatches Peers, accepts or rejects candidates. One Lead per project."
   },
   {
+    "id": "room-lead-sol61",
+    "name": "Lead (Sol 6.1)",
+    "icon": "codex",
+    "provider": "room-lead",
+    "model": "gpt-6.1-sol",
+    "modeId": "full-access",
+    "thinkingOptionId": "medium",
+    "notes": "Room Lead on Codex gpt-6.1-sol (trial). Same authority as the other Lead seats; one Lead per project."
+  },
+  {
     "id": "room-lead-claude",
     "name": "Lead (Opus)",
     "icon": "claude",
