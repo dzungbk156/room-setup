@@ -3,7 +3,7 @@ model_reasoning_effort = "medium"
 sandbox_mode = "danger-full-access"
 approval_policy = "never"
 room_user_skills = false
-room_user_skills_allow = "paseo*,browser-skill,ask-matt,code-review,codebase-design,domain-modeling,grill-with-docs,grilling,improve-codebase-architecture,research,setup-matt-pocock-skills,to-spec,to-tickets,triage,wayfinder"
+room_user_skills_allow = "paseo*,browser-skill,ask-matt,code-review,codebase-design,domain-modeling,grill-with-docs,grilling,improve-codebase-architecture,research,setup-matt-pocock-skills,to-spec,to-tickets,triage,wayfinder,implement-spec,pr,retro"
 
 developer_instructions = """
 Room role: Lead.

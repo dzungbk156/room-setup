@@ -132,11 +132,13 @@ contract disagree, this contract wins.
   creating tickets.
 - Align and plan belong to Lead, working directly with Human: `grill-with-docs`
   (with `grilling` and `domain-modeling`), `to-spec`, `to-tickets`,
-  `wayfinder`, `triage`, `improve-codebase-architecture`, `ask-matt`.
+  `wayfinder`, `triage`, `improve-codebase-architecture`, `ask-matt`,
+  `implement-spec` (orchestration, see below), and `retro` after a session.
   Supervisor does not grill Human on a project or write specs or tickets.
 - Build belongs to Peers: `implement`, `tdd`, `diagnosing-bugs`, `prototype`,
-  `resolving-merge-conflicts`, `wizard`, and the reading part of `research`.
-  Peers use `codebase-design` vocabulary and read `CONTEXT.md` and ADRs as
+  `wizard`, and the reading part of `research`. Merge and rebase conflicts are
+  ordinary Peer work (no dedicated skill).
+  Peers use `codebase-design` vocabulary and read `GLOSSARY.md` and ADRs as
   consumers; they change them only when the brief grants that scope. Peers do
   not run Lead-side skills unless the brief asks.
 - Dispatch. A ticket in the ready-for-agent state is a Peer brief. Lead
@@ -150,6 +152,24 @@ contract disagree, this contract wins.
 - `implement` commits only to the branch or worktree named in the brief. The
   commit is a candidate: the Peer reports its hash, base, changed paths, and
   verification. A Peer's own `code-review` is evidence, not acceptance.
+- `implement-spec`. Lead runs it as the room's spec-wide build loop: the
+  "integration branch" is created by Lead; each "implementer subagent" is a
+  writable Peer on its own branch and worktree based on the integration
+  branch, briefed with the ticket path and building it with `tdd`; the
+  "exploration subagent" is the read-only scout, saving notes outside the repo
+  at a path named in the brief; the "merger subagent" is a Peer that merges an
+  accepted candidate into the integration branch. Lead accepts each candidate
+  before it is merged and dispatches the next frontier. A draft PR is an
+  external effect: open one only when the tracker closes work through PRs or
+  Human asks.
+- `pr` shapes any PR body. Writing one is in scope for whoever was asked;
+  opening, pushing, or merging a PR needs Human authority.
 - `code-review`. Lead runs it by dispatching two fresh read-only Peers against
   the same fixed point, one for the Standards axis and one for the Spec axis,
   then reads both reports and explicitly accepts or rejects the candidate.
+- `retro` runs after a session at Human's request, usually with Lead. It
+  proposes environment changes (navigation pointers, automated checks, coding
+  standards, steering files); applying them is ordinary scoped work.
+- Domain docs are `GLOSSARY.md` / `GLOSSARY-MAP.md` (formerly `CONTEXT.md` /
+  `CONTEXT-MAP.md`). If a project still has the old names, Lead proposes a
+  `git mv` to the new names before relying on the skills.
