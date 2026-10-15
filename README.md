@@ -69,7 +69,7 @@ contract `home/.config/codex-room/workflow/WORKSPACE_PROTOCOL.md`.
 ### Install
 
 ```bash
-git clone <this-repo-url> room-setup
+git clone https://github.com/dzungbk156/room-setup.git room-setup
 cd room-setup
 
 scripts/install-slp            # dry run: prints every file and Paseo config change
@@ -155,7 +155,7 @@ Prerequisites:
 - `~/.local/bin` on `PATH`.
 
 ```bash
-git clone <this-repo-url> room-setup
+git clone https://github.com/dzungbk156/room-setup.git room-setup
 cd room-setup
 
 ./install                         # read-only plan and prerequisite check
