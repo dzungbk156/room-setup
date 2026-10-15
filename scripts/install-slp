@@ -48,10 +48,10 @@ PROFILES = REPO / "paseo" / "room-profiles.json"
 PASEO_CONFIG = HOME / ".paseo" / "config.json"
 MANIFEST = HOME / ".config" / "codex-room" / ".install-slp-manifest.json"
 REQUIRED_BINS = ["codex", "claude", "kiro-cli"]
-# Providers that must not receive Paseo orchestration tools once injection is on.
 # Retired room seats: removed from Paseo config; installed files backed up, then deleted.
 RETIRED_IDS = ["room-supervisor"]
 RETIRED_FILES = [".config/codex-room/roles/supervisor.md"]
+# Built-in providers that must not receive Paseo orchestration tools.
 NON_ROOM_PROVIDERS = ["claude", "codex", "opencode", "copilot", "pi", "omp", "kiro"]
 
 
@@ -74,8 +74,12 @@ def main() -> None:
     missing = [b for b in REQUIRED_BINS if not shutil.which(b)]
     if missing:
         raise SystemExit(f"missing required commands on PATH: {', '.join(missing)}")
-    if not (HOME / ".codex" / "config.toml").exists():
-        raise SystemExit("~/.codex/config.toml not found; install and log in to Codex first")
+    # codex-room-sync links these into the Lead runtime; check before writing anything.
+    missing_codex = [n for n in ("config.toml", "auth.json", "AGENTS.md", "skills", "plugins")
+                     if not (HOME / ".codex" / n).exists()]
+    if missing_codex:
+        raise SystemExit(f"missing in ~/.codex: {', '.join(missing_codex)}. Install and log in to Codex "
+                         "(codex login), and create an empty AGENTS.md, skills/, or plugins/ if absent.")
 
     def backup(path: pathlib.Path) -> None:
         if path.exists() or path.is_symlink():
@@ -118,7 +122,9 @@ def main() -> None:
         state = "unchanged" if existing.get(provider_id) == spec else ("update" if provider_id in existing else "add")
         print(f"{state if apply or state == 'unchanged' else 'would ' + state}  paseo provider {provider_id}")
         existing[provider_id] = spec
-    for provider_id in NON_ROOM_PROVIDERS:
+    # Paseo gives orchestration tools to any provider without a policy, so close
+    # every non-room provider: the built-ins plus custom ones already configured.
+    for provider_id in dict.fromkeys(NON_ROOM_PROVIDERS + [p for p in existing if p not in providers]):
         entry = existing.setdefault(provider_id, {})
         if "paseoTools" not in entry:
             print(f"{'set' if apply else 'would set'}  paseo provider {provider_id} paseoTools.enabled = false")
