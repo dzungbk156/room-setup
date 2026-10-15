@@ -92,7 +92,6 @@
           {
             "id": "gpt-6-astra",
             "label": "Astra Low",
-            "isDefault": true,
             "thinkingOptions": [
               {
                 "id": "low",
@@ -104,6 +103,7 @@
           {
             "id": "gpt-5.6-sol",
             "label": "Sol Medium",
+            "isDefault": true,
             "thinkingOptions": [
               {
                 "id": "medium",

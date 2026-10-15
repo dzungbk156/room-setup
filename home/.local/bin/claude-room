@@ -7,7 +7,7 @@
 # a SessionStart hook passed through --settings, scoped to this launch only.
 set -euo pipefail
 
-usage="usage: claude-room <supervisor|lead> [claude args...] | claude-room --session-context <role>"
+usage="usage: claude-room lead [claude args...] | claude-room --session-context <role>"
 
 room_config="${CODEX_ROOM_CONFIG_HOME:-${HOME}/.config/codex-room}"
 
@@ -33,7 +33,7 @@ role="${1:?$usage}"
 shift
 
 case "$role" in
-  supervisor|lead) ;;
+  lead) ;;
   *) echo "unknown claude-room role: $role" >&2; exit 2 ;;
 esac
 

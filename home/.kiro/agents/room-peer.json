@@ -11,6 +11,7 @@
   ],
   "resources": [
     "file://@@HOME@@/.config/codex-room/workflow/WORKSPACE_PROTOCOL.md",
+    "file://@@HOME@@/.config/codex-room/workflow/PONYTAIL.md",
     "skill://@@HOME@@/.kiro/skills/browser-skill/SKILL.md"
   ]
 }

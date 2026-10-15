@@ -1,77 +1,120 @@
-# Khảo sát ban đầu: fork và upstream — 2026-09-15
+# Initial survey: fork vs. upstream (2026-09-15)
 
-> Tài liệu này ghi lại khảo sát trước khi triển khai. Cấu hình và quy trình hiện hành
-> đã chuyển sang **stable v0.8.0**, không dùng đầu nhánh main được khảo sát dưới đây.
-> Xem [hướng dẫn release hiện hành](../../docs/paseo-release.md).
+> This records the survey done before the migration. The current configuration
+> and process have moved to **stable v0.8.0**, not the main-branch tip surveyed
+> below. See the [current release guide](../../docs/paseo-release.md).
 
-## Kết luận
+## Conclusion
 
-Có thể thay phần mở rộng MCP theo provider của fork bằng tính năng chính thức `agents.providers.<id>.paseoTools`. Không cần liệt kê từng tool bị cấm để giữ cách chia vai hiện tại: dùng `enabled: false` cho mọi provider ngoài Supervisor và Lead.
+The fork's per-provider MCP extension can be replaced by the official
+`agents.providers.<id>.paseoTools` feature. The current role split does not need
+a list of forbidden tools: set `enabled: false` on every provider other than
+Supervisor and Lead.
 
-Đây là kết quả khảo sát và config ứng viên; chưa đổi origin, checkout, bộ cài, config đang chạy hoặc restart daemon.
+This was a survey plus a candidate config. It did not change the origin,
+checkout, installer, running config, or restart the daemon.
 
-## Các bản đã đối chiếu
+## Revisions compared
 
-- Checkout `~/projects/supervisors/paseo`: nhánh `main`, origin là `git@github.com:example/paseo-fork.git`, upstream là `git@github.com:getpaseo/paseo.git`.
-- HEAD và origin/main sau fetch: `8511089eaeb06cddd049b629562926822020de5c`, ngày 2026-08-28, describe `v0.7.0-beta.1-13-g8511089ea`. Trùng pin trong `paseo/source.toml`.
-- upstream/main sau fetch: `cb90806045eb636a176c46b30b9e16cb5fa0a120`, describe `v0.8.0-34-gcb9080604`, package version `0.8.0`.
-- Hai nhánh đã rẽ: fork có 12 commit riêng (gồm merge/commit lặp lại), upstream có 193 commit riêng. Không thể chuyển bằng fast-forward từ HEAD hiện tại.
-- Fetch tags gặp tag cũ `v0.4.0-beta.2` khác nội dung local; không ghi đè tag đó. Fetch upstream/main riêng với `--no-tags` sau đó thành công.
-- `~/.paseo/config.json` khớp hoàn toàn với template hiện tại sau thay `@@HOME@@`.
+- Checkout `~/projects/supervisors/paseo`: branch `main`, origin
+  `git@github.com:example/paseo-fork.git`, upstream `git@github.com:getpaseo/paseo.git`.
+- HEAD and origin/main after fetch: `8511089eaeb06cddd049b629562926822020de5c`,
+  2026-08-28, describe `v0.7.0-beta.1-13-g8511089ea`. Matches the pin in
+  `paseo/source.toml`.
+- upstream/main after fetch: `cb90806045eb636a176c46b30b9e16cb5fa0a120`,
+  describe `v0.8.0-34-gcb9080604`, package version `0.8.0`.
+- The branches had diverged: the fork had 12 commits of its own (including
+  repeated merges/commits), upstream had 193. No fast-forward from the current HEAD.
+- Fetching tags hit an old `v0.4.0-beta.2` tag whose content differed locally;
+  it was not overwritten. Fetching upstream/main alone with `--no-tags` succeeded.
+- `~/.paseo/config.json` matched the template exactly after `@@HOME@@` substitution.
 
-## Config cần đổi
+## Config changes needed
 
-1. Giữ `daemon.mcp.enabled: true` và `daemon.mcp.injectIntoAgents: true`.
-2. Xóa `daemon.mcp.injectIntoProviders` (trường riêng của fork). Upstream không dùng trường này để chặn tool; schema cho phép trường lạ nên bỏ sót có thể không báo lỗi.
-3. Thêm `paseoTools: { "enabled": true }` vào `codex-supervisor` và `codex-lead`.
-4. Thêm `paseoTools: { "enabled": false }` vào `codex-peer` và mọi provider khác để giữ phạm vi cũ.
+1. Keep `daemon.mcp.enabled: true` and `daemon.mcp.injectIntoAgents: true`.
+2. Remove `daemon.mcp.injectIntoProviders` (fork-only field). Upstream does not
+   use it to block tools, and the schema accepts unknown fields, so leaving it
+   in may fail silently.
+3. Add `paseoTools: { "enabled": true }` to `codex-supervisor` and `codex-lead`.
+4. Add `paseoTools: { "enabled": false }` to `codex-peer` and every other
+   provider to keep the old scope.
 
-Config đầy đủ: [template hiện hành](../../home/.paseo/config.json.template). Bản này được tạo từ template đang chỉnh sửa của người dùng, giữ nguyên model, thinking, command, params và các thiết lập còn lại; chỉ chuyển chính sách MCP. Đã khai báo tắt cả các provider dựng sẵn `claude`, `codex`, `copilot`, `opencode`, `pi`, `omp` và các provider tùy chỉnh `grok`, `hermes`.
+Full config: [current template](../../home/.paseo/config.json.template). It was
+built from the user's in-progress template and keeps models, thinking, command,
+params, and other settings unchanged; only the MCP policy moved. It explicitly
+disables the built-in providers `claude`, `codex`, `copilot`, `opencode`, `pi`,
+`omp` and the custom providers `grok`, `hermes`.
 
-### Khác biệt hành vi quan trọng
+### Important behavior differences
 
-- Upstream mặc định bật đầy đủ tool khi provider không có `paseoTools`. Fork dùng allowlist nên provider mới mặc định nằm ngoài danh sách. Khi thêm provider sau này, cần đặt chính sách rõ ràng; upstream hiện không có default-deny toàn cục tương đương allowlist cũ.
-- `extends: "codex"` không kế thừa chính sách tool. Mỗi ID provider có chính sách riêng.
-- `paseoTools.enabled` chỉ điều khiển bộ tool của Paseo; `providers.<id>.enabled` điều khiển chính provider. Không thay thế hai trường này cho nhau.
-- `paseoTools.disabledTools` chỉ cần nếu muốn giữ một phần bộ tool; dùng đúng ID tool. Không nhầm với `disallowedTools` của provider runtime.
-- Upstream áp dụng chính sách cho cả MCP và native tools. Voice `speak` được xử lý riêng; cấu hình hiện tại đã tắt voice.
-- Sau chuyển bản chạy: reload config rồi tạo agent mới hoặc reload agent cũ. Phiên đang chạy giữ bộ tool nhận lúc khởi động.
-- Các trường `extends`, `command`, `env`, `params`, `models`, `additionalModels`, `thinkingOptions` và `isDefault` vẫn có trong schema upstream; không thấy yêu cầu đổi các profile hiện tại ở tầng config.
+- Upstream enables the full tool set when a provider has no `paseoTools`. The
+  fork used an allowlist, so new providers were excluded by default. Set an
+  explicit policy whenever you add a provider; upstream has no global
+  default-deny equivalent to the old allowlist.
+- `extends: "codex"` does not inherit the tool policy. Each provider ID has its own.
+- `paseoTools.enabled` controls only Paseo's tool set; `providers.<id>.enabled`
+  controls the provider itself. They are not interchangeable.
+- `paseoTools.disabledTools` is only needed to keep part of the tool set; use
+  exact tool IDs. Do not confuse it with the provider runtime's `disallowedTools`.
+- Upstream applies the policy to both MCP and native tools. Voice `speak` is
+  handled separately; the current config has voice off.
+- After switching builds: reload config, then create new agents or reload
+  existing ones. A running session keeps the tool set it received at startup.
+- `extends`, `command`, `env`, `params`, `models`, `additionalModels`,
+  `thinkingOptions`, and `isDefault` still exist in the upstream schema; the
+  current profiles need no config-level change.
 
-## Phần Room setup cần sửa cùng lúc
+## Room setup changes needed at the same time
 
-Chỉ đổi remote URL và JSON chưa đủ:
+Changing the remote URL and JSON is not enough:
 
-| Thành phần | Điều chỉnh cần làm |
+| Component | Required change |
 | --- | --- |
-| `paseo/source.toml` | Đổi nguồn chính sang getpaseo, cập nhật commit/version đã kiểm tra |
-| `scripts/install-paseo-fork` | Hỗ trợ nguồn upstream và chuyển checkout đã rẽ nhánh; hiện chỉ nhận no-op hoặc fast-forward, kiểm tra đúng topology fork |
-| `scripts/install-room` | Đồng bộ kiểm tra remote/provenance và quy trình chuyển checkout/rollback |
-| `home/.local/bin/paseo-local-update` | Bỏ URL fork và pin cũ hardcode; sửa kiểm tra nguồn, topology, cách chọn bản cập nhật |
-| `scripts/verify`, `scripts/doctor` | Kiểm tra nguồn upstream và chính sách `paseoTools` |
-| `scripts/export-current` | Thay điều kiện allowlist cũ bằng chính sách provider mới |
-| `tests/test_setup.py`, `tests/container/accept`, các test liên quan | Sửa kỳ vọng về nguồn, pin, migration và MCP |
-| README và `paseo/notes/*`, `docs/paseo-fork.md` | Cập nhật hướng dẫn và hành vi thực tế |
+| `paseo/source.toml` | Point the primary source at getpaseo; update the audited commit/version |
+| `scripts/install-paseo-fork` | Support the upstream source and switching a diverged checkout; it currently accepts only no-op or fast-forward and checks the fork topology |
+| `scripts/install-room` | Align remote/provenance checks and the checkout switch/rollback flow |
+| `home/.local/bin/paseo-local-update` | Drop the hardcoded fork URL and old pin; fix source, topology, and update-selection checks |
+| `scripts/verify`, `scripts/doctor` | Check the upstream source and the `paseoTools` policy |
+| `scripts/export-current` | Replace the old allowlist condition with the new provider policy |
+| `tests/test_setup.py`, `tests/container/accept`, related tests | Update expectations for source, pin, migration, and MCP |
+| README, `paseo/notes/*`, `docs/paseo-fork.md` | Update guidance and actual behavior |
 
-Khuyến nghị bỏ fork nhưng vẫn pin một bản upstream đã kiểm tra. Updater nên có bước chủ động chọn bản upstream mới và kiểm tra build trước khi cập nhật pin. Bộ hiện tại yêu cầu branch tip đúng bằng pin, nên pin một lần vẫn chưa giải quyết mong muốn cập nhật thuận tiện khi main tiếp tục tiến lên.
+Recommendation: drop the fork but keep pinning an audited upstream revision.
+The updater should have an explicit step to choose a new upstream revision and
+test the build before moving the pin. The current tooling requires the branch
+tip to equal the pin, so a one-time pin does not solve convenient updates as
+main keeps moving.
 
-Chuyển lần đầu nên giữ checkout fork làm bản quay lại, build upstream trong checkout riêng rồi chuyển bộ chạy sau kiểm tra. Không merge upstream vào fork để thực hiện migration này.
+For the first switch, keep the fork checkout as a fallback, build upstream in a
+separate checkout, and switch the running setup after verification. Do not
+merge upstream into the fork for this migration.
 
-## Một thay đổi riêng khác của fork
+## One other fork-only change
 
-Fork có patch `c81cb8473` cho phép client loopback thiếu bearer token kết nối ngay cả khi daemon có password. Upstream mới vẫn kiểm tra token khi có password (websocket-server.ts, attachAuthenticatedSocket); không giữ ngoại lệ đó. Config JSON đang đối chiếu không khai báo password, nhưng cần kiểm tra thiết lập thực tế qua môi trường/CLI và kết nối Desktop/CLI trước khi thay bộ chạy. Không kết luận tương thích kết nối chỉ từ việc schema MCP hợp lệ.
+Fork patch `c81cb8473` let a loopback client without a bearer token connect even
+when the daemon has a password. Current upstream still checks the token when a
+password is set (`websocket-server.ts`, `attachAuthenticatedSocket`); that
+exception is not kept. The compared config declares no password, but check the
+actual environment/CLI settings and Desktop/CLI connectivity before switching
+builds. Do not infer connection compatibility from a valid MCP schema alone.
 
-## Kiểm chứng đã thực hiện và giới hạn
+## Verification done and limits
 
-- Fetch cả origin và upstream; đối chiếu HEAD, branch, version, lịch sử riêng và source upstream.
-- Chạy schema `ProviderOverridesSchema` lấy trực tiếp từ upstream đã fetch với toàn bộ 11 provider trong config ứng viên: PASS.
-- Chạy các hàm chính sách upstream với 11 provider: chỉ Supervisor/Lead được bật bộ tool và `create_agent`: PASS. Xác nhận provider chưa khai báo mặc định bật.
-- Đọc đường khởi chạy agent xác nhận cùng gate áp dụng cho MCP/native, và test upstream về snapshot chính sách theo phiên.
-- Chưa build toàn bộ upstream, chưa chạy daemon upstream, chưa kiểm tra migration dữ liệu hoặc kết nối Desktop/CLI. Kết luận ở mức config/source; chưa phải xác nhận thay bản chạy thành công.
+- Fetched origin and upstream; compared HEAD, branch, version, divergent
+  history, and upstream source.
+- Ran upstream's `ProviderOverridesSchema` against all 11 providers in the
+  candidate config: PASS.
+- Ran upstream's policy functions on the 11 providers: only Supervisor/Lead get
+  the tool set and `create_agent`: PASS. Confirmed undeclared providers default to enabled.
+- Read the agent launch path to confirm the same gate covers MCP and native
+  tools, plus upstream's test for per-session policy snapshots.
+- Did not build all of upstream, run the upstream daemon, test data migration,
+  or test Desktop/CLI connectivity. Conclusions are at the config/source level,
+  not proof that a build switch succeeds.
 
-## Nguồn upstream
+## Upstream sources
 
-- [Tính năng chính thức #4277, merge ngày 2026-09-03](https://github.com/getpaseo/paseo/commit/53c96074791089949f6917cfa55db1d11f212521)
-- [Tài liệu MCP tại commit đã kiểm tra](https://github.com/getpaseo/paseo/blob/cb90806045eb636a176c46b30b9e16cb5fa0a120/public-docs/mcp.md)
-- [Schema provider](https://github.com/getpaseo/paseo/blob/cb90806045eb636a176c46b30b9e16cb5fa0a120/packages/protocol/src/provider-config.ts)
-- [Logic chọn chính sách theo ID provider](https://github.com/getpaseo/paseo/blob/cb90806045eb636a176c46b30b9e16cb5fa0a120/packages/server/src/server/agent/paseo-tool-policy.ts)
+- [Official feature #4277, merged 2026-09-03](https://github.com/getpaseo/paseo/commit/53c96074791089949f6917cfa55db1d11f212521)
+- [MCP docs at the audited commit](https://github.com/getpaseo/paseo/blob/cb90806045eb636a176c46b30b9e16cb5fa0a120/public-docs/mcp.md)
+- [Provider schema](https://github.com/getpaseo/paseo/blob/cb90806045eb636a176c46b30b9e16cb5fa0a120/packages/protocol/src/provider-config.ts)
+- [Policy selection by provider ID](https://github.com/getpaseo/paseo/blob/cb90806045eb636a176c46b30b9e16cb5fa0a120/packages/server/src/server/agent/paseo-tool-policy.ts)

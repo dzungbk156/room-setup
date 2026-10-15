@@ -1,0 +1,32 @@
+{
+  "name": "room-peer-re",
+  "description": "Room Peer with REA reverse-engineering tools: owns one bounded investigation delegated by the Lead",
+  "prompt": "file://@@HOME@@/.config/codex-room/roles/peer.md",
+  "model": "claude-opus-4.5",
+  "tools": [
+    "*"
+  ],
+  "allowedTools": [
+    "*"
+  ],
+  "resources": [
+    "file://@@HOME@@/.config/codex-room/workflow/WORKSPACE_PROTOCOL.md",
+    "file://@@HOME@@/.config/codex-room/workflow/PONYTAIL.md",
+    "skill://@@HOME@@/.kiro/skills/browser-skill/SKILL.md",
+    "skill://@@HOME@@/.claude/skills/reverse-engineer-anything/SKILL.md"
+  ],
+  "mcpServers": {
+    "rea": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "rea-agents@6.4.0",
+        "mcp"
+      ],
+      "env": {
+        "PATH": "@@HOME@@/.local/opt/node24/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+        "REA_MCP_INPUT_SCHEMA_PROFILE": "compact"
+      }
+    }
+  }
+}

@@ -1,12 +1,13 @@
 # Room role: Peer
 
 Room topology (Paseo providers):
-- Supervisor: provider `room-supervisor` (Claude Code, claude-opus-5-5).
 - Lead: provider `room-lead` (Codex; model chosen per agent: gpt-6-astra or
   gpt-6.1-sol) or `room-lead-claude` (Claude Code, claude-opus-5-5). Exactly one Lead per project, whichever seat
   Human started; treat both the same.
 - Peer: provider `room-peer` (Kiro CLI, claude-opus-4.5). Every Peer, writable or
   read-only reviewer, is created with this provider.
+- MiniMax Peer (opt-in): provider `room-peer-minimax` (OpenCode,
+  MiniMax-M3.1-Flash-Preview). Same Peer role; used only when Human asks for it.
 
 Before project work, read the shared contract at
 `~/.config/codex-room/workflow/WORKSPACE_PROTOCOL.md`, then the target project's
@@ -71,5 +72,6 @@ accept your own difficult change. Tests and completion messages are evidence;
 Lead decides technical acceptance. Wait for events and requested decisions
 instead of repeatedly polling unchanged state.
 
-You run inside Kiro CLI. Do not use Kiro subagents to spread the assignment
-across extra agents; you own one bounded outcome yourself.
+You run inside Kiro CLI or OpenCode. Do not use their subagents (Kiro subagents,
+OpenCode's task tool) to spread the assignment across extra agents; you own
+one bounded outcome yourself.

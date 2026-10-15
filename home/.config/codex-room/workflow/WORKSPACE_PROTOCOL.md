@@ -14,11 +14,14 @@ unreadable shared contract rather than silently assuming it was loaded.
 
 - Human owns product goals, priority, material cost, external effects, and
   irreversible risk decisions.
-- Supervisor observes, faithfully routes Human intent, and performs bounded
-  room recovery. It is not another project Lead.
 - Lead owns project framing, technical decisions, integration, verification,
   and explicit candidate acceptance.
 - Peer owns one bounded outcome delegated by Lead.
+- Supervisor exists only in the core three-role Codex room
+  (`codex-supervisor`); the multi-provider room has none. Where present, the
+  Supervisor observes, faithfully routes Human intent, and performs bounded
+  room recovery through Lead. It is not another project Lead, and it does not
+  direct Peers, accept candidates, or spawn agents.
 
 ## Ownership and dispatch
 
@@ -102,13 +105,6 @@ owner and return event/checkpoint. Silence, DONE, or test results do not close
 the loop. Keep dependent work waiting for resolution while unrelated ready
 work continues.
 
-Supervisor checks briefs, actual Peer responses, and Lead dispositions,
-intervenes through Lead on a concrete gap, and follows it until repaired
-responses and decisions provide closure. An acknowledgment alone is not
-closure. Allow normal response handling within an active turn; escalate at
-the affected decision or missed checkpoint. Private supervision records and
-conversation sources do not belong in project-facing instructions.
-
 Writer proof, passing tests, completion messages, and lifecycle status are
 evidence. Lead inspects the exact artifact and explicitly accepts or rejects
 the candidate with a technical reason. Human alone decides product scope,
@@ -134,7 +130,6 @@ contract disagree, this contract wins.
   (with `grilling` and `domain-modeling`), `to-spec`, `to-tickets`,
   `wayfinder`, `triage`, `improve-codebase-architecture`, `ask-matt`,
   `implement-spec` (orchestration, see below), and `retro` after a session.
-  Supervisor does not grill Human on a project or write specs or tickets.
 - Build belongs to Peers: `implement`, `tdd`, `diagnosing-bugs`, `prototype`,
   `wizard`, and the reading part of `research`. Merge and rebase conflicts are
   ordinary Peer work (no dedicated skill).
@@ -148,7 +143,7 @@ contract disagree, this contract wins.
 - Sub-agents. When a skill says to spawn a sub-agent, background agent, or
   parallel agents: Lead creates Paseo Peers with provider and mode `room-peer`
   (read-only unless the step writes); a Peer performs those steps itself,
-  sequentially, without spawning agents. Supervisor never spawns them.
+  sequentially, without spawning agents.
 - `implement` commits only to the branch or worktree named in the brief. The
   commit is a candidate: the Peer reports its hash, base, changed paths, and
   verification. A Peer's own `code-review` is evidence, not acceptance.
@@ -167,6 +162,26 @@ contract disagree, this contract wins.
 - `code-review`. Lead runs it by dispatching two fresh read-only Peers against
   the same fixed point, one for the Standards axis and one for the Spec axis,
   then reads both reports and explicitly accepts or rejects the candidate.
+- Ponytail. Every Peer carries `PONYTAIL.md`: before writing code it reuses
+  what the codebase, standard library, platform, or installed dependencies
+  already provide, writes the smallest complete change, never cuts validation,
+  error handling, security, or accessibility, and ends its handoff with what it
+  skipped or did not check. A brief that asks for more (`tdd`, broader tests)
+  wins. A deliberate shortcut carries a `ponytail:` comment naming its limit.
+- `ponytail-review` is the third review axis: for a non-trivial or risky
+  candidate, Lead adds a fresh read-only Peer that runs it beside the Standards
+  and Spec Peers (bugs outside the diff, security, real load, untested risky
+  logic, what to cut). Its findings are evidence; Lead still decides.
+- `ponytail-audit` (whole repo, ranked) and `ponytail-debt` (ledger of
+  `ponytail:` shortcuts) are read-only Peer tasks run at Human's request or
+  before planning a cleanup; Lead turns accepted findings into tracker tickets.
+- REA (reverse engineering). A Peer in mode `room-peer-re` carries the REA MCP
+  tools and `reverse-engineer-anything` skill for shipped targets without
+  source: native binaries, Electron/JavaScript bundles, .NET assemblies,
+  websites, app packages. The brief names the target path or URL and the
+  question; the handoff returns findings with REA's evidence and stated
+  unknowns. Native disassembly needs Hopper, Ghidra, or IDA configured; without
+  one the Peer reports that limit instead of guessing.
 - `retro` runs after a session at Human's request, usually with Lead. It
   proposes environment changes (navigation pointers, automated checks, coding
   standards, steering files); applying them is ordinary scoped work.

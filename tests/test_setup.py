@@ -103,7 +103,7 @@ class SetupShapeTests(unittest.TestCase):
         config = json.loads(PASEO_TEMPLATE.read_text().replace("@@HOME@@", "/tmp/operator"))
         expected = {
             "supervisor": ("gpt-5.6-sol", "medium"),
-            "lead": ("gpt-5.6-sol", "medium"),
+            "lead": ("gpt-6-astra", "medium"),
             "peer": ("gpt-5.6-sol", "medium"),
         }
         for role, (model, effort) in expected.items():
@@ -1393,7 +1393,7 @@ class RuntimeGenerationTests(unittest.TestCase):
     def test_all_roles_generate_isolated_configs(self) -> None:
         expected = {
             "supervisor": ("gpt-5.6-sol", "medium"),
-            "lead": ("gpt-5.6-sol", "medium"),
+            "lead": ("gpt-6-astra", "medium"),
             "peer": ("gpt-5.6-sol", "medium"),
         }
         for role, (model, effort) in expected.items():

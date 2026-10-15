@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Install the multi-provider SLP room profiles.
 
-Supervisor -> Claude Code (claude-room), Lead -> Codex (codex-room),
-Peer -> Kiro CLI (room-peer agent). Does not build or replace Paseo, and does
+Lead -> Codex (codex-room) or Claude Code (claude-room), Peers -> Kiro CLI
+(room-peer agents) or OpenCode (MiniMax). Does not build or replace Paseo, and does
 not touch ~/.codex, ~/.claude, or Kiro auth. Every replaced file is backed up.
 
 usage: scripts/install-slp [--apply] [--force]   (default: dry run)
@@ -25,17 +25,23 @@ REPO = pathlib.Path(__file__).resolve().parent.parent
 HOME = pathlib.Path.home()
 SRC = REPO / "home"
 
-# (source relative to home/, destination relative to $HOME, render @@HOME@@, executable)
+# (source relative to home/ -- or a list of sources to concatenate --,
+#  destination relative to $HOME, render @@HOME@@, executable)
 FILES = [
     (".config/codex-room/model-instructions.md", None, False, False),
     (".config/codex-room/workflow/WORKSPACE_PROTOCOL.md", None, False, False),
+    (".config/codex-room/workflow/PONYTAIL.md", None, False, False),
     (".config/codex-room/overlays/lead.config.toml", None, False, False),
-    (".config/codex-room/roles/supervisor.md", None, False, False),
     (".config/codex-room/roles/peer.md", None, False, False),
     (".local/bin/codex-room", None, False, True),
     (".local/bin/codex-room-sync", None, False, True),
     (".local/bin/claude-room", None, False, True),
     (".kiro/agents/room-peer.json", None, True, False),
+    (".kiro/agents/room-peer-re.json", None, True, False),
+    (".config/codex-room/opencode-peer/opencode.json", None, False, False),
+    # MiniMax Peer rules: OpenCode 2 reads AGENTS.md from OPENCODE_CONFIG_DIR, not "instructions".
+    ([".config/codex-room/roles/peer.md", ".config/codex-room/workflow/WORKSPACE_PROTOCOL.md",
+      ".config/codex-room/workflow/PONYTAIL.md"], ".config/codex-room/opencode-peer/AGENTS.md", False, False),
 ]
 PROVIDERS_TEMPLATE = REPO / "paseo" / "room-providers.json.template"
 PROFILES = REPO / "paseo" / "room-profiles.json"
@@ -43,6 +49,9 @@ PASEO_CONFIG = HOME / ".paseo" / "config.json"
 MANIFEST = HOME / ".config" / "codex-room" / ".install-slp-manifest.json"
 REQUIRED_BINS = ["codex", "claude", "kiro-cli"]
 # Providers that must not receive Paseo orchestration tools once injection is on.
+# Retired room seats: removed from Paseo config; installed files backed up, then deleted.
+RETIRED_IDS = ["room-supervisor"]
+RETIRED_FILES = [".config/codex-room/roles/supervisor.md"]
 NON_ROOM_PROVIDERS = ["claude", "codex", "opencode", "copilot", "pi", "omp", "kiro"]
 
 
@@ -75,9 +84,11 @@ def main() -> None:
             shutil.copy2(path, dest, follow_symlinks=False)
 
     for rel, dest_rel, do_render, executable in FILES:
-        src = SRC / rel
+        sources = rel if isinstance(rel, list) else [rel]
         dest = HOME / (dest_rel or rel)
-        content = src.read_text()
+        content = "\n\n".join((SRC / s).read_text().rstrip("\n") for s in sources) + "\n"
+        if not isinstance(rel, list):
+            content = (SRC / rel).read_text()
         if do_render:
             content = render(content)
         key = str(dest.relative_to(HOME))
@@ -98,7 +109,9 @@ def main() -> None:
                 dest.chmod(0o755)
             manifest[key] = digest(content)
 
-    providers = json.loads(render(PROVIDERS_TEMPLATE.read_text()))
+    # Paseo spawns the Kiro Peer by absolute path; use the kiro-cli found on PATH.
+    kiro_cli = os.path.abspath(shutil.which("kiro-cli"))
+    providers = json.loads(render(PROVIDERS_TEMPLATE.read_text()).replace("@@KIRO_CLI@@", kiro_cli))
     config = json.loads(PASEO_CONFIG.read_text()) if PASEO_CONFIG.exists() else {"version": 1}
     existing = config.setdefault("agents", {}).setdefault("providers", {})
     for provider_id, spec in providers.items():
@@ -121,6 +134,20 @@ def main() -> None:
             profiles.append(profile)
         else:
             profiles[idx] = profile
+    for retired in RETIRED_IDS:
+        if existing.pop(retired, None) is not None:
+            print(f"{'remove' if apply else 'would remove'}  paseo provider {retired}")
+        if any(p.get("id") == retired for p in profiles):
+            print(f"{'remove' if apply else 'would remove'}  paseo profile {retired}")
+            profiles[:] = [p for p in profiles if p.get("id") != retired]
+    for rel in RETIRED_FILES:
+        path = HOME / rel
+        if path.exists():
+            print(f"{'remove' if apply else 'would remove'}  ~/{rel}  (backed up)")
+            if apply:
+                backup(path)
+                path.unlink()
+            manifest.pop(rel, None)
     mcp = config.setdefault("daemon", {}).setdefault("mcp", {})
     if mcp.get("enabled") is not True or mcp.get("injectIntoAgents") is not True:
         print(f"{'set' if apply else 'would set'}  daemon.mcp.enabled/injectIntoAgents = true")
