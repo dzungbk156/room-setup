@@ -175,7 +175,8 @@ def main() -> None:
         if backup_root.exists():
             backup_root.chmod(0o700)
             print(f"backups    {backup_root}")
-        print("\nNext: restart the Paseo daemon so MCP injection and providers apply:  paseo restart")
+        print("\nNext: restart Paseo so providers, profiles, and MCP injection apply:"
+              "\n  paseo restart   (or quit and reopen the Paseo app)")
     else:
         print("\nDry run only. Re-run with --apply to install.")
 
