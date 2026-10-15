@@ -17,7 +17,7 @@ checkout, installer, running config, or restart the daemon.
 ## Revisions compared
 
 - Checkout `~/projects/supervisors/paseo`: branch `main`, origin
-  `git@github.com:example/paseo-fork.git`, upstream `git@github.com:getpaseo/paseo.git`.
+  a private Paseo fork, upstream `git@github.com:getpaseo/paseo.git`.
 - HEAD and origin/main after fetch: `8511089eaeb06cddd049b629562926822020de5c`,
   2026-08-28, describe `v0.7.0-beta.1-13-g8511089ea`. Matches the pin in
   `paseo/source.toml`.

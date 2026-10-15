@@ -1,4 +1,4 @@
-"""Release selection and the one-time, transaction-owned fork migration."""
+"""Release selection and transaction-owned Paseo checkout replacement."""
 import json
 import os
 from pathlib import Path
@@ -10,7 +10,6 @@ import unittest
 import test_setup
 
 ROOT = Path(__file__).resolve().parents[1]
-OLD_FORK = "8511089eaeb06cddd049b629562926822020de5c"
 
 
 class PaseoReleaseTests(unittest.TestCase):
@@ -92,64 +91,14 @@ class PaseoReleaseTests(unittest.TestCase):
         self.assertFalse(self.target.exists())
         self.assertFalse((self.root / "npm.log").exists())
 
-    def make_fork(self, legacy=False):
+    def make_divergent_checkout(self):
         subprocess.run(["git", "clone", "-q", str(self.remote), str(self.target)], check=True)
         self.git(self.target, "checkout", "-B", "main", self.first)
-        (self.target / "fork-feature").write_text("private fork implementation\n")
-        self.git(self.target, "add", "fork-feature")
-        self.git(self.target, "-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "fork")
-        fork_commit = self.git(self.target, "rev-parse", "HEAD")
-        if legacy:
-            self.git(self.target, "remote", "set-url", "origin", "git@github.com:getpaseo/paseo.git")
-            self.git(self.target, "remote", "add", "legacy-fork", "git@github.com:example/paseo-fork.git")
-        else:
-            self.git(self.target, "remote", "set-url", "origin", "git@github.com:example/paseo-fork.git")
-            self.git(self.target, "remote", "add", "upstream", "git@github.com:getpaseo/paseo.git")
+        (self.target / "local-feature").write_text("divergent local commit\n")
+        self.git(self.target, "add", "local-feature")
+        self.git(self.target, "-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "local")
         self.git(self.target, "config", "branch.main.remote", "origin")
-        (self.target / ".codex").mkdir()
-        (self.target / ".codex/operator-note").write_text("keep me\n")
-        # Substitute only the audited historical SHA in a disposable copy.
-        # Production code exposes no environment override for that baseline.
-        copy = self.root / "setup"
-        for relative in ("scripts/lib/common.sh", "scripts/install-paseo", "paseo/source.toml"):
-            dst = copy / relative
-            dst.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(ROOT / relative, dst)
-            dst.write_text(dst.read_text().replace(OLD_FORK, fork_commit))
-        return fork_commit, copy / "scripts/install-paseo"
-
-    def test_fork_migration_requires_journal_preserves_notes_and_removes_fork_remote(self):
-        fork, helper = self.make_fork()
-        config_before = (self.target / ".git/config").read_bytes()
-        result = self.run_helper("--preflight", helper=helper)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual((self.target / ".git/config").read_bytes(), config_before)
-        self.assertEqual(self.git(self.target, "rev-parse", "HEAD"), fork)
-        result = self.run_helper(helper=helper)
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("transactional backup", result.stderr)
-        result = self.run_helper(helper=helper, PASEO_COORDINATOR_MANAGED="1")
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(self.git(self.target, "rev-parse", "HEAD"), self.release)
-        self.assertEqual(self.git(self.target, "remote"), "origin")
-        self.assertEqual(self.git(self.target, "remote", "get-url", "origin"), str(self.remote))
-        self.assertEqual(self.git(self.target, "for-each-ref", "--format=%(refname)", "refs/remotes/origin"), "")
-        self.assertFalse((self.target / "fork-feature").exists())
-        self.assertEqual((self.target / ".codex/operator-note").read_text(), "keep me\n")
-        result = self.run_helper(helper=helper)
-        self.assertEqual(result.returncode, 0, result.stderr)
-
-    def test_legacy_remote_layout_migrates_and_unknown_fork_commit_is_refused(self):
-        fork, helper = self.make_fork(legacy=True)
-        result = self.run_helper(helper=helper, PASEO_COORDINATOR_MANAGED="1")
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(self.git(self.target, "remote"), "origin")
-        self.git(self.target, "remote", "set-url", "origin", "git@github.com:example/paseo-fork.git")
-        self.git(self.target, "remote", "add", "upstream", "git@github.com:getpaseo/paseo.git")
-        result = self.run_helper(helper=helper, PASEO_COORDINATOR_MANAGED="1")
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("recognized Room baseline", result.stderr)
-        self.assertEqual(self.git(self.target, "rev-parse", "HEAD"), self.release)
+        return self.git(self.target, "rev-parse", "HEAD")
 
     def test_policy_verifier_rejects_implicit_tools_and_peer_enabled(self):
         config = json.loads((ROOT / "home/.paseo/config.json.template").read_text())
@@ -174,19 +123,17 @@ class PaseoReleaseTests(unittest.TestCase):
         self.assertRegex(manifest["release_tag"], r"^v\d+\.\d+\.\d+$")
         self.assertEqual(manifest["url"], "https://github.com/getpaseo/paseo.git")
 
-    def test_public_migration_rolls_back_fork_on_final_verification_failure(self):
+    def test_public_install_rolls_back_divergent_checkout_on_final_verification_failure(self):
         lifecycle = test_setup.PublicInstallTransactionTests()
         lifecycle.setUp()
         self.addCleanup(lifecycle.tearDown)
-        fork, helper = self.make_fork()
-        copy = helper.parents[1]
+        local = self.make_divergent_checkout()
+        copy = self.root / "setup"
         for directory in ("scripts", "home", "paseo"):
             shutil.copytree(ROOT / directory, copy / directory, dirs_exist_ok=True,
                             ignore=shutil.ignore_patterns("__pycache__"))
         shutil.copy2(ROOT / "install", copy / "install")
-        for relative in ("scripts/install-room", "scripts/install-paseo"):
-            file = copy / relative
-            file.write_text(file.read_text().replace(OLD_FORK, fork))
+        helper = copy / "scripts/install-paseo"
         manifest = copy / "paseo/source.toml"
         manifest.write_text(manifest.read_text().replace(
             "b8e24677e12b226c7c38c1c3a40649daa9f1152f", self.release))
@@ -198,15 +145,15 @@ class PaseoReleaseTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("PASEO_RELEASE_READY", result.stdout, result.stderr)
         self.assertEqual(lifecycle.tree_snapshot(self.target), before)
-        self.assertEqual(self.git(self.target, "rev-parse", "HEAD"), fork)
+        self.assertEqual(self.git(self.target, "rev-parse", "HEAD"), local)
         self.assertFalse((lifecycle.home / ".paseo/config.json").exists())
-        # The same transaction succeeds on retry and retains a full fork backup.
+        # The same transaction succeeds on retry and retains a full checkout backup.
         result = subprocess.run([str(copy / "install"), "--apply"],
                                 env={**env, "VERIFY_FAIL": "0"}, text=True, capture_output=True)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(self.git(self.target, "rev-parse", "HEAD"), self.release)
         self.assertEqual(self.git(self.target, "remote"), "origin")
-        self.assertTrue(list((lifecycle.home / ".codex-room-backups").rglob("fork-feature")))
+        self.assertTrue(list((lifecycle.home / ".codex-room-backups").rglob("local-feature")))
 
     def test_tag_moving_between_lookup_and_fetch_is_rejected(self):
         wrapper = self.root / "bin/git"

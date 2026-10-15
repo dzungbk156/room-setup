@@ -734,15 +734,9 @@ def validate_existing_paseo(paths: dict[str, Path | str]) -> None:
         fail("Paseo checkout has a custom core.hooksPath")
     remotes = git_read(target, "remote").splitlines()
     origin = git_read_optional(target, "remote", "get-url", "origin") if "origin" in remotes else ""
-    upstream = git_read_optional(target, "remote", "get-url", "upstream") if "upstream" in remotes else ""
-    legacy = git_read_optional(target, "remote", "get-url", "legacy-fork") if "legacy-fork" in remotes else ""
     normalized = remotes == ["origin"] and origin == str(paths["source"])
-    fork_topology = remotes == ["origin", "upstream"] and origin == "git@github.com:example/paseo-fork.git" and upstream == "git@github.com:getpaseo/paseo.git"
-    legacy_topology = remotes == ["legacy-fork", "origin"] and origin == "git@github.com:getpaseo/paseo.git" and legacy == "git@github.com:example/paseo-fork.git"
-    if not (normalized or fork_topology or legacy_topology):
+    if not normalized:
         fail("Paseo checkout has an unrecognized remote topology")
-    if not normalized and git_read(target, "rev-parse", "HEAD") != "8511089eaeb06cddd049b629562926822020de5c":
-        fail("Paseo fork differs from the recognized Room baseline")
     tracking = git_read_optional(target, "config", "--get", f"branch.{branch}.remote")
     merge = git_read_optional(target, "config", "--get", f"branch.{branch}.merge")
     if tracking != "origin" or merge != f"refs/heads/{branch}":

@@ -214,8 +214,7 @@ preflights Paseo in a disposable location before changing live state. Paseo uses
 installs lefthook. The public transaction makes the audited tag authoritative for
 a clean checkout on the configured branch and official origin, including when
 the checkout is ahead or divergent; the standalone helper remains
-fast-forward-only. The recognized old Room fork is migrated once inside the
-backed-up install transaction.
+fast-forward-only. Fork checkouts and other remote layouts are refused.
 
 The installer backs up every replaced managed file and the Paseo checkout under
 `~/.codex-room-backups/core3-<UTC timestamp>-<pid>-<nanoseconds>/` with
@@ -286,8 +285,6 @@ judgment can change a technical decision. All role overlays currently request
 The lower-level scripts are maintenance interfaces used by the public
 lifecycle and are not alternate fresh-install commands. See
 [docs/operations.md](docs/operations.md) for scope-owned parallel work and handoff,
-candidate acceptance, and maintenance runbooks. The composed evidence and
-single final Human runbook are in
-[docs/acceptance/core4.md](docs/acceptance/core4.md).
+candidate acceptance, and maintenance runbooks.
 
 Official Codex configuration precedence is documented by OpenAI in the [Codex config basics](https://learn.chatgpt.com/docs/config-file/config-basic.md). `codex-room` uses a separate `CODEX_HOME` per role; this is a local orchestration layer, not a replacement for the operator's Codex installation.

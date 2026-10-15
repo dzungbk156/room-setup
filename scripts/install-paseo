@@ -105,7 +105,7 @@ stage_history() {
 }
 
 validate_existing_target() {
-  local repo="$1" history_repo="$2" actual_branch origin upstream legacy
+  local repo="$1" history_repo="$2" actual_branch origin
   local remote_names tracking_remote tracking_merge fetched_existing
 
   [[ -d "$repo" && ! -L "$repo" && -d "$repo/.git" && ! -L "$repo/.git" ]] || die "target exists but is not a direct Git checkout: $repo"
@@ -115,28 +115,15 @@ validate_existing_target() {
   check_hooks "$repo"
 
   origin=$(git -C "$repo" remote get-url origin 2>/dev/null || true)
-  upstream=$(git -C "$repo" remote get-url upstream 2>/dev/null || true)
-  legacy=$(git -C "$repo" remote get-url legacy-fork 2>/dev/null || true)
   remote_names=$(git -C "$repo" remote | LC_ALL=C sort | tr '\n' ' ')
   tracking_remote=$(git -C "$repo" config "branch.$branch.remote" 2>/dev/null || true)
   tracking_merge=$(git -C "$repo" config "branch.$branch.merge" 2>/dev/null || true)
-  remote_mode=normalized
-  if [[ "$remote_names" == "origin " && "$origin" == "$source_url" ]]; then
-    :
-  elif [[ "$remote_names" == "origin upstream " && "$origin" == git@github.com:example/paseo-fork.git && "$upstream" == git@github.com:getpaseo/paseo.git ]]; then
-    remote_mode=fork
-  elif [[ "$remote_names" == "legacy-fork origin " && "$origin" == git@github.com:getpaseo/paseo.git && "$legacy" == git@github.com:example/paseo-fork.git ]]; then
-    remote_mode=legacy
-  else
-    die "unknown Paseo remote topology; expected origin=official source or the recognized Room fork"
-  fi
+  [[ "$remote_names" == "origin " && "$origin" == "$source_url" ]] || \
+    die "unknown Paseo remote topology; expected only origin=$source_url"
   [[ "$tracking_remote" == origin && "$tracking_merge" == "refs/heads/$branch" ]] || die "unexpected Paseo branch tracking"
 
   old_commit=$(git -C "$repo" rev-parse HEAD)
-  if [[ "$remote_mode" != normalized ]]; then
-    [[ "$old_commit" == 8511089eaeb06cddd049b629562926822020de5c ]] || die "fork checkout differs from the recognized Room baseline"
-    [[ "$preflight" == true || "$coordinator_managed" == 1 ]] || die "use ./install --apply to migrate the fork with a transactional backup"
-  elif [[ "$old_commit" != "$verified_commit" ]]; then
+  if [[ "$old_commit" != "$verified_commit" ]]; then
     git -C "$history_repo" fetch --quiet --no-tags "$repo" "$old_commit"
     fetched_existing=$(git -C "$history_repo" rev-parse "FETCH_HEAD^{commit}")
     [[ "$fetched_existing" == "$old_commit" ]] || die "could not inspect existing Paseo HEAD without mutation"
@@ -200,15 +187,6 @@ if [[ "$old_commit" != "$verified_commit" ]]; then
     git -C "$target" restore --source="$old_commit" --staged --worktree -- .
     die "could not materialize audited Paseo release"
   fi
-fi
-if [[ "$remote_mode" != normalized ]]; then
-  if [[ "$remote_mode" == legacy ]]; then
-    git -C "$target" remote remove legacy-fork
-  else
-    git -C "$target" remote remove upstream
-  fi
-  git -C "$target" remote remove origin
-  git -C "$target" remote add origin "$source_url"
 fi
 git -C "$target" update-ref "refs/tags/$release_tag" "$(git -C "$target" rev-parse FETCH_HEAD)"
 git -C "$target" config "branch.$branch.remote" origin

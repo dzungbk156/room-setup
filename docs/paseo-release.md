@@ -35,17 +35,8 @@ divergent. The standalone helper accepts only the exact pin or an ancestor of it
 so a history replacement cannot occur without the coordinator's backup and
 rollback boundary. Untracked operator state is preserved.
 
-One explicit exception handles the old Room fork at
-`8511089eaeb06cddd049b629562926822020de5c`. The recognized layouts are:
-
-- `origin = git@github.com:example/paseo-fork.git`, `upstream = git@github.com:getpaseo/paseo.git`.
-- Historical `origin = git@github.com:getpaseo/paseo.git`, `legacy-fork = git@github.com:example/paseo-fork.git`.
-
-`./install --apply` backs up this checkout, changes the working files to the stable
-release, sets origin to the official HTTPS source, and removes the fork remote.
-No merge or rebase is needed. Unknown fork commits, dirty checkouts, detached HEAD,
-and custom remote layouts are refused. The lower-level helper only permits this
-migration inside the coordinator's transaction; use the public install command.
+Fork checkouts and custom remote layouts are refused; re-clone from the
+official source instead.
 
 The install does not restart a running daemon or replace Desktop. After reviewing
 and applying, restart/reload Paseo when existing agent work has finished. New or
@@ -72,33 +63,9 @@ This controls tool delivery, not what an agent with shell access can discover.
 
 `scripts/update-paseo` delegates to the installed `paseo-local-update`. It checks
 the same stable tag/commit, builds and signs Desktop, backs up the previous app,
-and restarts Paseo. Migrate the fork through `./install --apply` first. See
+and restarts Paseo. See
 [`paseo/notes/desktop-build.md`](../paseo/notes/desktop-build.md).
 
-The old fork bypassed bearer authentication for loopback clients even when the
-daemon had a password. Official Paseo requires that token when a password is set.
-The Room template does not configure a password; check Desktop/CLI connectivity
-if the daemon receives one through other settings.
-
-## Validation for this change (2026-09-15)
-
-- GitHub release metadata confirms v0.8.0 is published, not draft/prerelease.
-- Real isolated `scripts/install-paseo --preflight`: PASS for v0.8.0, including
-  `npm ci`, unchanged lockfile, server/CLI build, required outputs, and CLI help.
-  An initial esbuild install failed with macOS spawn error -88; a retry with
-  foreground lifecycle output completed successfully without dependency changes.
-- v0.8.0 provider schema and policy functions: PASS for all 11 configured providers.
-- Source verification, shell/Python syntax, and whitespace checks: PASS.
-- Python 3.11 suite: 63/64 PASS. The existing `test_role_defaults_are_aligned`
-  fails because the pre-existing working config selects Astra for Lead/Peer while
-  their overlays still select Sol. Those user model edits and overlays were retained.
-- New release/migration tests cover annotated tags, moved/missing/beta tags,
-  tag changes during fetch, main advancing past the release, explicit tool policies,
-  both recognized fork remote layouts, unknown-fork refusal, journal-required
-  migration, untracked-note preservation, rollback after final verification failure,
-  and successful retry with a retained fork backup.
-- Docker acceptance was not run: the Docker daemon is unavailable. Desktop build,
-  live daemon sessions, and authenticated provider connections were not exercised.
-
-Only Room setup source files were updated. The operator's Paseo checkout, remotes,
-installed config, running daemon, and Desktop app were not changed in this review.
+Official Paseo requires a bearer token for every client when the daemon has a
+password. The Room template does not configure a password; check Desktop/CLI
+connectivity if the daemon receives one through other settings.
