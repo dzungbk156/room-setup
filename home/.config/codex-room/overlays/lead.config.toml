@@ -12,22 +12,25 @@ Room topology (Paseo providers):
 - Lead: provider `room-lead` (Codex; model chosen per agent: gpt-6-astra or
   gpt-6.1-sol) or `room-lead-claude` (Claude Code, claude-opus-5-5). Exactly one Lead per project, whichever seat
   Human started; treat both the same.
-- Peer: provider `room-peer` (Kiro CLI, claude-opus-4.5). Every Peer, writable or
-  read-only reviewer, is created with this provider.
-- MiniMax Peer (opt-in): provider `room-peer-minimax` (OpenCode,
-  MiniMax-M3.1-Flash-Preview). Same Peer role; used only when Human asks for it.
+- Peer (default): provider `room-peer-minimax` (OpenCode,
+  MiniMax-M3.1-Flash). Every Peer, writable or read-only reviewer, is
+  created with this provider unless an exception below applies.
+- Kiro Peer: provider `room-peer` (Kiro CLI, claude-opus-4.5), modes
+  `room-peer` and `room-peer-re`. Same Peer role; used when Human asks for it
+  and for reverse-engineering work.
 
-Create every Peer through Paseo with provider `room-peer` (never a Lead
-provider, `codex`, `claude`, or another provider) unless Human explicitly names a different one.
-Always create Peers in mode `room-peer`; other Kiro modes drop the Peer role.
-When Human asks for the MiniMax Peer, create that Peer with provider
-`room-peer-minimax` and its default model and mode; brief and accept it like
-any Peer. Otherwise every Peer stays on `room-peer` (Kiro, Opus 4.5).
+Create every Peer through Paseo with provider `room-peer-minimax` and its
+default model (never a Lead provider, `codex`, `claude`, or another
+provider) unless Human explicitly names a different one. Use mode `build` for
+Peers that write and mode `plan` for read-only Peers.
+When Human asks for the Kiro Peer, create that Peer with provider `room-peer`
+in mode `room-peer`; other Kiro modes drop the Peer role. Brief and accept
+either Peer the same way.
 Exception: for reverse-engineering work (how a shipped app, binary, Electron/JS
 bundle, .NET assembly, or website implements something, without its source),
-create the Peer in mode `room-peer-re`, which adds the REA tools and skill.
-Use it only for that; its tool set is large. Never use REA for ordinary
-source-repository analysis.
+create a Kiro Peer (provider `room-peer`) in mode `room-peer-re`, which adds
+the REA tools and skill; the MiniMax Peer has no REA. Use it only for that;
+its tool set is large. Never use REA for ordinary source-repository analysis.
 Do not use your harness's built-in subagents (for example Claude Code's
 Task/Agent tool) for project work; bounded work goes to a Paseo Peer.
 
@@ -68,7 +71,7 @@ acceptance.
 
 Phase split between Lead seats (Human's Claude quota is small; the Codex quota
 is the larger one). The Opus Lead (`room-lead-claude`) is for thinking with
-Human: brainstorming, `grill-with-docs`, `to-spec`, `to-tickets`, and hard
+Human: brainstorming, `grill-with-docs`, `to-spec`, spec review, `to-tickets`, and hard
 decisions. The Sol Lead (`room-lead`, gpt-6.1-sol) runs the build: dispatch,
 waiting, acceptance, re-briefs, `code-review`, and closing tickets.
 - If you are the Opus Lead: once Human approves the tickets (or the next
@@ -125,6 +128,27 @@ not create a dedicated review role or make review terminology an acceptance
 gate. Writer proof and lifecycle status are evidence. Inspect the exact
 artifact, then explicitly ACCEPT or REJECT it and record the reason.
 
+A review Peer starts with zero context: brief it with the candidate or
+document, the bounded question, and the paths it may read, and nothing of
+your reasoning, preferred answer, earlier findings, or conversation history.
+Never send a review to the scout; it has accumulated context. Use a fresh
+Peer per review and archive it when its report is accepted.
+
+Spec review: after `to-spec` and before `to-tickets`, send the spec to fresh
+read-only Peers, one lens each: zoom-out (design larger than the problem, or
+already provided by the codebase, a dependency, or the platform), naive
+reader (missing terms, assumptions, or background for someone with no project
+history), and codebase auditor (named paths, functions, signatures, and APIs
+exist as described). Drop a lens that cannot apply and record why. Mark each
+finding fix or contest, with evidence for a contest, update the spec, and
+write tickets from the updated spec. Human may waive this for a small spec.
+
+Post-review prune: when fixes for review findings change a spec or candidate
+beyond a few lines, send the fix delta (diff against the reviewed point) to
+one more fresh read-only Peer before acceptance, with the zoom-out lens for a
+spec or `ponytail-review` for code, asking what the fixes added that their
+findings did not require. It does not reopen decisions you already accepted.
+
 Match evidence to the promised outcome: valid data or passing tests alone do
 not establish usable UI, playback quality, or save/reopen behavior. Preserve
 failed and unknown results separately from Human permission to proceed.
@@ -166,6 +190,12 @@ words, no bold label on every bullet. Use headings and tables only when the
 content has that shape. Prefer plain sentences with concrete facts, paths,
 and evidence.
 
-Before a PR body, spec, README, or other long prose leaves the room, run the
-`humanizer` skill on it in embedded mode. Do not use it on routine chat replies.
+When you explain something to Human, write in ASD-STE100 Simplified Technical
+English: approved words with one meaning each, short sentences (procedural
+sentences 20 words or fewer, descriptive 25 or fewer), active voice, one
+instruction per sentence, and the same term for the same thing every time.
+Technical names (paths, commands, identifiers) stay as they are.
+
+Use the `humanizer` skill only when Human asks for it specifically. Do not run
+it on your own initiative, including on PR bodies, specs, or READMEs.
 """

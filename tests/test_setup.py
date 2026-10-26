@@ -722,6 +722,14 @@ class SetupShapeTests(unittest.TestCase):
             "fresh read-only Peer",
             "explicitly accepts or rejects",
             "repeatedly polling unchanged state",
+            "A review Peer starts with zero context",
+            "it never performs a review",
+            "Spec review. After `to-spec` and before `to-tickets`",
+            "zoom-out",
+            "naive reader",
+            "codebase auditor",
+            "Post-review prune",
+            "fix delta",
         ):
             self.assertIn(capability, protocol)
 
@@ -741,6 +749,20 @@ class SetupShapeTests(unittest.TestCase):
             self.assertNotIn("at most one active", active)
         self.assertIn("fresh read-only Peer", lead)
         self.assertIn("explicitly ACCEPT or REJECT", lead)
+        for review_rule in (
+            "A review Peer starts with zero context",
+            "Never send a review to the scout",
+            "Spec review: after `to-spec` and before `to-tickets`",
+            "Post-review prune",
+            "fix delta",
+        ):
+            self.assertIn(review_rule, lead)
+        self.assertIn("Create every Peer through Paseo with provider `room-peer-minimax`", lead)
+        self.assertIn("create a Kiro Peer (provider `room-peer`) in mode `room-peer-re`", lead)
+        self.assertNotIn("used only when Human asks for it.", lead)
+        self.assertIn("Peer (default): provider `room-peer-minimax`", (ROOM / "roles" / "peer.md").read_text())
+        self.assertIn("default Peer provider\n  `room-peer-minimax`", protocol)
+        self.assertIn("Use mode `build` for\nPeers that write and mode `plan` for read-only Peers", lead)
         self.assertFalse((ROOM / "overlays" / "review.config.toml").exists())
         self.assertNotIn("codex-review", lead)
         self.assertIn("REOPEN_REQUEST", peer)

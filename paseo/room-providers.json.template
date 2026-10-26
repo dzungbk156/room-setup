@@ -113,14 +113,14 @@
   "room-peer-minimax": {
     "extends": "opencode",
     "label": "Room Peer (MiniMax)",
-    "description": "Opt-in Peer seat: OpenCode with MiniMax M3.1 Flash Preview, no orchestration tools",
+    "description": "Default Peer seat: OpenCode with MiniMax M3.1 Flash, no orchestration tools",
     "env": {
       "OPENCODE_CONFIG_DIR": "@@HOME@@/.config/codex-room/opencode-peer"
     },
     "models": [
       {
-        "id": "minimax-coding-plan/MiniMax-M3.1-Flash-Preview",
-        "label": "MiniMax M3.1 Flash Preview",
+        "id": "minimax-coding-plan/MiniMax-M3.1-Flash",
+        "label": "MiniMax M3.1 Flash",
         "isDefault": true
       }
     ],

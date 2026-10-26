@@ -89,6 +89,13 @@ review uses the flexible Peer profile and a bounded question; no dedicated
 review role, mandatory form, or reviewer count is
 required.
 
+A review Peer starts with zero context. Its brief names the candidate or
+document, the bounded question, and the paths it may read. It carries no Lead
+reasoning, preferred answer, earlier findings, or conversation history; those
+bias the reviewer toward what Lead already believes. The reusable read-only
+scout accumulates context, so it never performs a review: each review gets a
+fresh Peer, archived when its report is accepted.
+
 ## Acceptance and waiting
 
 Every actionable Peer response closes a loop with its original Lead brief.
@@ -130,6 +137,17 @@ contract disagree, this contract wins.
   (with `grilling` and `domain-modeling`), `to-spec`, `to-tickets`,
   `wayfinder`, `triage`, `improve-codebase-architecture`, `ask-matt`,
   `implement-spec` (orchestration, see below), and `retro` after a session.
+- Spec review. After `to-spec` and before `to-tickets`, Lead sends the spec to
+  fresh read-only Peers, one lens each: zoom-out (is the design larger than
+  the problem; does the codebase, a dependency, or the platform already
+  provide it), naive reader (can someone with no project history follow it;
+  which terms, assumptions, or background are missing), and codebase auditor
+  (do the named paths, functions, signatures, and APIs exist as described).
+  Lead may drop a lens that cannot apply, such as the auditor for a spec that
+  names no existing code, and records why. Lead marks each finding fix or
+  contest in the spec or tracker, citing evidence for a contest, updates the
+  spec, and writes tickets only from the updated spec. Human may waive the
+  step for a small spec.
 - Build belongs to Peers: `implement`, `tdd`, `diagnosing-bugs`, `prototype`,
   `wizard`, and the reading part of `research`. Merge and rebase conflicts are
   ordinary Peer work (no dedicated skill).
@@ -141,8 +159,9 @@ contract disagree, this contract wins.
   is accepted. The brief carries the ticket path, branch or worktree, write
   scope, and acceptance evidence.
 - Sub-agents. When a skill says to spawn a sub-agent, background agent, or
-  parallel agents: Lead creates Paseo Peers with provider and mode `room-peer`
-  (read-only unless the step writes); a Peer performs those steps itself,
+  parallel agents: Lead creates Paseo Peers with the default Peer provider
+  `room-peer-minimax` (mode `plan` for read-only, `build` when the step
+  writes); a Peer performs those steps itself,
   sequentially, without spawning agents.
 - `implement` commits only to the branch or worktree named in the brief. The
   commit is a candidate: the Peer reports its hash, base, changed paths, and
@@ -172,10 +191,18 @@ contract disagree, this contract wins.
   candidate, Lead adds a fresh read-only Peer that runs it beside the Standards
   and Spec Peers (bugs outside the diff, security, real load, untested risky
   logic, what to cut). Its findings are evidence; Lead still decides.
+- Post-review prune. Fixes for review findings tend to add guards, options,
+  and sections the finding did not need. When fixes change a spec or
+  candidate beyond a few lines, Lead sends the fix delta (diff against the
+  reviewed point) to one more fresh read-only Peer before acceptance: the
+  zoom-out lens for a spec, `ponytail-review` for code. It asks what the
+  fixes added that their findings did not require, and does not reopen
+  decisions Lead already accepted.
 - `ponytail-audit` (whole repo, ranked) and `ponytail-debt` (ledger of
   `ponytail:` shortcuts) are read-only Peer tasks run at Human's request or
   before planning a cleanup; Lead turns accepted findings into tracker tickets.
-- REA (reverse engineering). A Peer in mode `room-peer-re` carries the REA MCP
+- REA (reverse engineering). A Kiro Peer (provider `room-peer`) in mode
+  `room-peer-re` carries the REA MCP
   tools and `reverse-engineer-anything` skill for shipped targets without
   source: native binaries, Electron/JavaScript bundles, .NET assemblies,
   websites, app packages. The brief names the target path or URL and the

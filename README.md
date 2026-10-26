@@ -21,8 +21,8 @@ you also want this repo to build Paseo from source.
 Paseo
   ├─ room-lead          Codex (gpt-6-astra or gpt-6.1-sol) via codex-room lead
   ├─ room-lead-claude   Claude Code (claude-opus-5-5) via claude-room lead
-  ├─ room-peer          Kiro CLI (claude-opus-4.5), modes room-peer / room-peer-re
-  └─ room-peer-minimax  OpenCode (MiniMax M3.1 Flash Preview), opt-in
+  ├─ room-peer-minimax  OpenCode (MiniMax M3.1 Flash), default Peer
+  └─ room-peer          Kiro CLI (claude-opus-4.5), modes room-peer / room-peer-re
 ```
 
 Only the Lead providers get Paseo's orchestration tools (create/message/archive
@@ -36,9 +36,9 @@ any custom providers already in your config.
 | Lead (Astra) | `room-lead` | `gpt-6-astra` | Default Codex Lead |
 | Lead (Sol 6.1) | `room-lead` | `gpt-6.1-sol` | Build phase: dispatch, acceptance, review |
 | Lead (Opus) | `room-lead-claude` | `claude-opus-5-5` | Thinking with Human: grilling, specs, tickets |
-| Peer | `room-peer` | `claude-opus-4.5` | Every Peer by default |
+| Peer (MiniMax) | `room-peer-minimax` | MiniMax M3.1 Flash | Every Peer by default |
+| Peer | `room-peer` | `claude-opus-4.5` | Only when Human asks |
 | Peer (REA) | `room-peer` (mode `room-peer-re`) | `claude-opus-4.5` | Reverse engineering only |
-| Peer (MiniMax) | `room-peer-minimax` | MiniMax M3.1 Flash Preview | Only when Human asks |
 
 Start one Lead per project from the Paseo app. The Lead creates Peers itself.
 Role rules live in `home/.config/codex-room/overlays/lead.config.toml` (shared by
@@ -58,9 +58,10 @@ contract `home/.config/codex-room/workflow/WORKSPACE_PROTOCOL.md`.
     writing anything if one is missing; an empty `AGENTS.md` or directory is fine.
   - `claude` (Claude Code) logged in to a Claude subscription. `claude-room`
     unsets `ANTHROPIC_API_KEY` / `ANTHROPIC_BASE_URL` on purpose.
-  - `kiro-cli` on `PATH` with access to `claude-opus-4.5`. The installer records
-    that path in the Paseo provider; re-run it if Kiro moves.
-  - Optional: `opencode` logged in to the MiniMax coding plan, for the MiniMax Peer.
+  - `opencode` logged in to the MiniMax coding plan, for the default MiniMax Peer.
+  - `kiro-cli` on `PATH` with access to `claude-opus-4.5`, for the Kiro and REA
+    Peers. The installer records that path in the Paseo provider; re-run it if
+    Kiro moves.
 - Optional skills the room refers to by name. Missing skills are skipped by the
   agents, but the workflow assumes them:
   - Lead: [mattpocock/skills](https://github.com/mattpocock/skills)

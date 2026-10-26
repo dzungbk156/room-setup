@@ -51,8 +51,8 @@
     "id": "room-peer-minimax",
     "name": "Peer (MiniMax)",
     "provider": "room-peer-minimax",
-    "model": "minimax-coding-plan/MiniMax-M3.1-Flash-Preview",
-    "notes": "Opt-in room Peer on OpenCode + MiniMax M3.1 Flash Preview. Created by the Lead only when Human asks for the MiniMax Peer; default Peers stay on Kiro.",
+    "model": "minimax-coding-plan/MiniMax-M3.1-Flash",
+    "notes": "Default room Peer on OpenCode + MiniMax M3.1 Flash. Leads use it for all Peer work; Kiro (room-peer) only when Human asks for it, or for REA.",
     "icon": "opencode"
   }
 ]

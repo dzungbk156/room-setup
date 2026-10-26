@@ -47,7 +47,7 @@ PROVIDERS_TEMPLATE = REPO / "paseo" / "room-providers.json.template"
 PROFILES = REPO / "paseo" / "room-profiles.json"
 PASEO_CONFIG = HOME / ".paseo" / "config.json"
 MANIFEST = HOME / ".config" / "codex-room" / ".install-slp-manifest.json"
-REQUIRED_BINS = ["codex", "claude", "kiro-cli"]
+REQUIRED_BINS = ["codex", "claude", "kiro-cli", "opencode"]
 # Retired room seats: removed from Paseo config; installed files backed up, then deleted.
 RETIRED_IDS = ["room-supervisor"]
 RETIRED_FILES = [".config/codex-room/roles/supervisor.md"]
