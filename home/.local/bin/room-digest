@@ -1,0 +1,226 @@
+#!/usr/bin/env python3
+"""Print the room's start-of-session digest for one project.
+
+Usage: room-digest [PROJECT_DIR]    (default: current directory)
+
+One bounded, read-only block: the project's git repositories, its open
+local-markdown tickets (.scratch/<feature>/issues/*.md), and the room's live
+Leads and Peers with their ledger labels (room.ticket, room.scope,
+room.branch). The Claude Lead gets this through claude-room's SessionStart
+hook; the Codex Lead runs it as its first command.
+
+Agent records are read from Paseo's on-disk store ($PASEO_HOME/agents), which
+is Paseo's internal format, not a public API. Every read here fails soft: an
+unreadable store prints one line saying so and the rest of the digest still
+prints. Recheck read_agents() after a Paseo upgrade.
+"""
+from __future__ import annotations
+
+import datetime as dt
+import glob
+import json
+import os
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+MAX_TICKETS = 30
+CLOSED_STATUSES = {
+    "done", "accepted", "resolved", "closed", "wontfix", "cancelled",
+    "canceled", "rejected", "merged", "superseded",
+}
+LEDGER_KEYS = ("room.ticket", "room.scope", "room.branch")
+PARENT_LABEL = "paseo.parent-agent-id"
+
+
+def git(repo: Path, *args: str) -> str:
+    done = subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True, timeout=10)
+    return done.stdout.strip() if done.returncode == 0 else ""
+
+
+def repositories(project: Path) -> list[Path]:
+    repos = [project] if (project / ".git").exists() else []
+    for child in sorted(project.iterdir()):
+        if child.is_dir() and not child.name.startswith(".") and (child / ".git").exists():
+            repos.append(child)
+    return repos
+
+
+def repo_line(project: Path, repo: Path) -> str:
+    name = "." if repo == project else repo.name
+    lines = git(repo, "status", "--porcelain=v1", "--branch").splitlines()
+    if not lines:
+        return f"{name}: git status unavailable"
+    head = lines[0][3:]
+    branch = head.split("...")[0]
+    track = re.search(r"\[(.*)\]", head)
+    dirty = len(lines) - 1
+    parts = [f"branch {branch}", f"{dirty} uncommitted" if dirty else "clean"]
+    if track:
+        parts.append(track.group(1))
+    last = git(repo, "log", "-1", "--format=%h %s (%cr)")
+    worktrees = git(repo, "worktree", "list", "--porcelain").count("\nworktree ") or 0
+    if worktrees:
+        parts.append(f"{worktrees} extra worktree(s)")
+    return f"{name}: {', '.join(parts)}; last {last}"
+
+
+def ticket_field(text: str, field: str) -> str:
+    match = re.search(rf"^{field}:\s*(.+)$", text, re.MULTILINE)
+    return match.group(1).strip() if match else ""
+
+
+def open_tickets(project: Path) -> tuple[list[str], int]:
+    rows = []
+    for path in sorted(project.glob(".scratch/*/issues/*.md")):
+        try:
+            text = path.read_text(errors="replace")
+        except OSError:
+            continue
+        status = ticket_field(text, "Status") or "no status"
+        if status.split()[0].lower().strip(".,") in CLOSED_STATUSES:
+            continue
+        if len(status) > 40:
+            status = status[:39] + "…"
+        title = next((line.lstrip("# ").strip() for line in text.splitlines() if line.startswith("#")), path.stem)
+        blocked = ticket_field(text, "Blocked by")
+        row = f"{path.relative_to(project)}  [{status}]  {title}"
+        if blocked and blocked.lower() not in ("none", "-", "n/a"):
+            row += f"  (blocked by: {blocked})"
+        rows.append(row)
+    return rows[:MAX_TICKETS], max(0, len(rows) - MAX_TICKETS)
+
+
+def read_agents(paseo_home: Path) -> dict[str, dict]:
+    agents = {}
+    for name in glob.glob(str(paseo_home / "agents" / "*" / "*.json")):
+        try:
+            record = json.loads(Path(name).read_text())
+        except (OSError, ValueError):
+            continue
+        if isinstance(record, dict) and record.get("id"):
+            agents[record["id"]] = record
+    return agents
+
+
+def age(timestamp: str | None) -> str:
+    if not timestamp:
+        return "?"
+    try:
+        then = dt.datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+    except ValueError:
+        return "?"
+    minutes = int((dt.datetime.now(dt.timezone.utc) - then).total_seconds() // 60)
+    if minutes < 60:
+        return f"{minutes}m"
+    return f"{minutes // 60}h" if minutes < 48 * 60 else f"{minutes // 1440}d"
+
+
+def within(path: str, root: Path) -> bool:
+    try:
+        Path(path).resolve().relative_to(root)
+        return True
+    except (ValueError, OSError):
+        return False
+
+
+def room_agents(project: Path, agents: dict[str, dict]) -> tuple[list[str], list[str], list[str]]:
+    def labels(record: dict) -> dict:
+        value = record.get("labels")
+        return value if isinstance(value, dict) else {}
+
+    def belongs(record: dict, depth: int = 0) -> bool:
+        if within(record.get("cwd") or "", project):
+            return True
+        parent = agents.get(labels(record).get(PARENT_LABEL, ""))
+        return depth < 5 and parent is not None and belongs(parent, depth + 1)
+
+    def short(agent_id: str) -> str:
+        return agent_id[:7]
+
+    def state(record: dict) -> str:
+        text = f"{record.get('lastStatus') or '?'} {age(record.get('lastActivityAt') or record.get('updatedAt'))}"
+        if record.get("requiresAttention"):
+            text += f", needs attention ({record.get('attentionReason') or 'unknown'})"
+        return text
+
+    leads, peers, warnings = [], [], []
+    live = [r for r in agents.values() if not r.get("archivedAt") and belongs(r)]
+    for record in sorted(live, key=lambda r: r.get("createdAt") or ""):
+        provider = str(record.get("provider") or "")
+        line = f"{short(record['id'])} {provider} {state(record)} \"{record.get('title') or ''}\""
+        if provider.startswith("room-lead"):
+            leads.append(line)
+        elif provider.startswith("room-peer"):
+            tags = labels(record)
+            ledger = " ".join(f"{key[5:]}={tags[key]}" for key in LEDGER_KEYS if tags.get(key))
+            parent_id = tags.get(PARENT_LABEL, "")
+            parent = agents.get(parent_id)
+            if not parent_id:
+                lead = "none"
+            elif parent is None:
+                lead = f"{short(parent_id)}(missing)"
+            elif parent.get("archivedAt"):
+                lead = f"{short(parent_id)}(archived)"
+            else:
+                lead = short(parent_id)
+            peers.append(f"{line} {ledger or 'no ledger labels'} lead={lead}")
+            if not tags.get("room.ticket"):
+                warnings.append(f"Peer {short(record['id'])} has no room.ticket label: identify its work and label it.")
+            if lead != short(parent_id):
+                warnings.append(f"Peer {short(record['id'])} has no live Lead ({lead}): adopt it or archive it.")
+    if len(leads) > 1:
+        warnings.append(
+            f"{len(leads)} Leads are not archived; the room runs one Lead per project. "
+            "Ask Human which earlier Leads to archive."
+        )
+    return leads, peers, warnings
+
+
+def main() -> int:
+    if len(sys.argv) > 2 or (len(sys.argv) == 2 and sys.argv[1] in ("-h", "--help")):
+        print(__doc__.split("\n\n")[1])
+        return 0 if len(sys.argv) == 2 else 2
+    project = Path(sys.argv[1] if len(sys.argv) == 2 else os.getcwd()).expanduser().resolve()
+    if not project.is_dir():
+        print(f"room-digest: not a directory: {project}", file=sys.stderr)
+        return 2
+    paseo_home = Path(os.environ.get("PASEO_HOME", "~/.paseo")).expanduser()
+
+    now = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    out = [
+        f"ROOM DIGEST for {project} ({now})",
+        "Start-of-session state. Read it once and trust it; do not re-gather what it shows.",
+        "",
+        "## Repositories",
+    ]
+    repos = repositories(project)
+    out += [f"- {repo_line(project, repo)}" for repo in repos] or ["- none found"]
+
+    out += ["", "## Open tickets (.scratch/*/issues)"]
+    if not (project / "docs" / "agents" / "issue-tracker.md").exists():
+        out.append("- docs/agents/issue-tracker.md is missing: tracker not set up for this project.")
+    tickets, more = open_tickets(project)
+    out += [f"- {row}" for row in tickets] or ["- none open"]
+    if more:
+        out.append(f"- ... {more} more open tickets not shown")
+
+    out += ["", "## Room agents (not archived)"]
+    if not (paseo_home / "agents").is_dir():
+        out.append(f"- Paseo agent store not readable at {paseo_home / 'agents'}; use list_agents.")
+    else:
+        leads, peers, warnings = room_agents(project, read_agents(paseo_home))
+        out.append("Leads:")
+        out += [f"- {line}" for line in leads] or ["- none"]
+        out.append("Peers:")
+        out += [f"- {line}" for line in peers] or ["- none"]
+        if warnings:
+            out.append("Needs a decision:")
+            out += [f"- {line}" for line in warnings]
+    print("\n".join(out))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

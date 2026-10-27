@@ -41,6 +41,14 @@ any custom providers already in your config.
 | Peer (REA) | `room-peer` (mode `room-peer-re`) | `claude-opus-4.5` | Reverse engineering only |
 
 Start one Lead per project from the Paseo app. The Lead creates Peers itself.
+
+At session start the Lead reads `room-digest` for its project: git state, open
+`.scratch` tickets, and the room's Leads and Peers. The Claude Lead gets it in
+its session context; the Codex Lead runs it first. The Lead labels each Peer
+with `room.ticket`, `room.scope`, and `room.branch`, so the digest shows who
+owns what after a restart or a Lead handoff. The digest reads Paseo's on-disk
+agent records (`~/.paseo/agents`), which is Paseo's internal format; recheck
+it after a Paseo upgrade.
 Role rules live in `home/.config/codex-room/overlays/lead.config.toml` (shared by
 both Lead seats), `home/.config/codex-room/roles/peer.md`, and the shared
 contract `home/.config/codex-room/workflow/WORKSPACE_PROTOCOL.md`.
@@ -87,7 +95,7 @@ paseo restart                  # or quit and reopen the Paseo app
 
 - `~/.config/codex-room/` (Lead overlay, Peer role, workspace protocol,
   `PONYTAIL.md`, OpenCode Peer config)
-- `~/.local/bin/codex-room`, `codex-room-sync`, `claude-room`
+- `~/.local/bin/codex-room`, `codex-room-sync`, `claude-room`, `room-digest`
 - `~/.kiro/agents/room-peer.json`, `room-peer-re.json`
 - the room providers and agent profiles in `~/.paseo/config.json`, merged into
   your existing config, `paseoTools.enabled = false` on non-room providers, and

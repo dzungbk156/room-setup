@@ -1567,5 +1567,84 @@ class RuntimeGenerationTests(unittest.TestCase):
         self.assertIn("[mcp_servers.example]", (runtime / "config.toml").read_text())
         self.assertFalse((runtime / "SUPERVISOR_NOTEBOOK.md").exists())
 
+
+class RoomDigestTests(unittest.TestCase):
+    DIGEST = HOME_MIRROR / ".local" / "bin" / "room-digest"
+    CLAUDE_ROOM = HOME_MIRROR / ".local" / "bin" / "claude-room"
+
+    def setUp(self) -> None:
+        self.temporary = tempfile.TemporaryDirectory()
+        root = Path(self.temporary.name).resolve()
+        self.project = root / "project"
+        issues = self.project / ".scratch" / "feat" / "issues"
+        issues.mkdir(parents=True)
+        (self.project / "docs" / "agents").mkdir(parents=True)
+        (self.project / "docs" / "agents" / "issue-tracker.md").write_text("# Issue tracker\n")
+        (issues / "01-open.md").write_text("# 01 Open work\n\nStatus: ready-for-agent\n")
+        (issues / "02-blocked.md").write_text("# 02 Blocked work\n\nStatus: needs-triage\nBlocked by: 01-open.md\n")
+        (issues / "03-done.md").write_text("# 03 Finished work\n\nStatus: done\n")
+        self.paseo = root / "paseo"
+        store = self.paseo / "agents" / "ws"
+        store.mkdir(parents=True)
+        lead, gone = "a" * 36, "f" * 36
+
+        def agent(agent_id: str, **fields: object) -> None:
+            record = {"id": agent_id, "lastStatus": "idle", "lastActivityAt": "2026-10-26T10:00:00.000Z", **fields}
+            (store / f"{agent_id}.json").write_text(json.dumps(record))
+
+        agent(lead, provider="room-lead-claude", cwd=str(self.project), title="the lead", labels={})
+        agent("b" * 36, provider="room-peer-minimax", cwd=str(root / "worktree"), title="labelled peer",
+              labels={"paseo.parent-agent-id": lead, "room.ticket": ".scratch/feat/issues/01-open.md",
+                      "room.scope": "src/", "room.branch": "feat/01"})
+        agent("c" * 36, provider="room-peer", cwd=str(self.project), title="orphan peer",
+              labels={"paseo.parent-agent-id": gone})
+        agent("d" * 36, provider="room-peer", cwd=str(self.project), title="archived peer",
+              archivedAt="2026-10-25T10:00:00.000Z", labels={})
+        agent("e" * 36, provider="room-peer", cwd=str(root / "elsewhere"), title="unrelated peer", labels={})
+        self.env = {**os.environ, "PASEO_HOME": str(self.paseo)}
+
+    def tearDown(self) -> None:
+        self.temporary.cleanup()
+
+    def test_digest_lists_open_tickets_and_the_peer_ledger(self) -> None:
+        completed = subprocess.run([str(self.DIGEST), str(self.project)], env=self.env,
+                                   capture_output=True, text=True, check=True)
+        out = completed.stdout
+        self.assertIn(".scratch/feat/issues/01-open.md  [ready-for-agent]  01 Open work", out)
+        self.assertIn("(blocked by: 01-open.md)", out)
+        self.assertNotIn("03-done.md", out)
+        self.assertIn("aaaaaaa room-lead-claude", out)
+        self.assertIn("ticket=.scratch/feat/issues/01-open.md scope=src/ branch=feat/01 lead=aaaaaaa", out)
+        self.assertIn("lead=fffffff(missing)", out)
+        self.assertIn("Peer ccccccc has no room.ticket label", out)
+        self.assertIn("Peer ccccccc has no live Lead", out)
+        self.assertNotIn("Peer bbbbbbb has", out)
+        self.assertNotIn("archived peer", out)
+        self.assertNotIn("unrelated peer", out)
+
+    def test_digest_fails_soft_without_a_paseo_store(self) -> None:
+        env = {**self.env, "PASEO_HOME": str(Path(self.temporary.name) / "absent")}
+        completed = subprocess.run([str(self.DIGEST), str(self.project)], env=env,
+                                   capture_output=True, text=True, check=True)
+        self.assertIn("Paseo agent store not readable", completed.stdout)
+        self.assertIn("01-open.md", completed.stdout)
+
+    def test_claude_lead_session_context_includes_the_digest(self) -> None:
+        completed = subprocess.run([str(self.CLAUDE_ROOM), "--session-context", "lead"], cwd=self.project,
+                                   env={**self.env, "CODEX_ROOM_CONFIG_HOME": str(ROOM)},
+                                   capture_output=True, text=True, check=True)
+        context = json.loads(completed.stdout)["hookSpecificOutput"]["additionalContext"]
+        self.assertIn("Room role: Lead.", context)
+        self.assertIn(f"ROOM DIGEST for {self.project}", context)
+        self.assertIn("01-open.md", context)
+
+    def test_installer_and_lead_contract_ship_the_digest_and_ledger(self) -> None:
+        self.assertIn('(".local/bin/room-digest", None, False, True)', (ROOT / "scripts" / "install-slp").read_text())
+        lead = (ROOM / "overlays" / "lead.config.toml").read_text()
+        for rule in ("`room-digest <project>`", "`room.ticket`", "`room.scope`", "`room.branch`",
+                     "adopt the listed Peers", "`notifyOnFinish`"):
+            self.assertIn(rule, lead)
+
+
 if __name__ == "__main__":
     unittest.main()

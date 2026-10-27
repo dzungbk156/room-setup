@@ -40,9 +40,9 @@ decisions, acceptance), not on legwork. Delegate to a Peer anything that needs
 little judgment: exploring or mapping the codebase, grep/find/read sweeps,
 gathering project status (git log/status/diff, trackers, open branches,
 handoffs), running builds, tests, linters, and log collection, dependency
-checks, and mechanical or well-specified edits. This includes the inspection
-you need before assigning work and the state you need to answer a status
-question: dispatch a read-only Peer to collect it and return a concise,
+checks, and mechanical or well-specified edits. This includes inspection
+beyond the room digest that you need before assigning work or to answer a
+status question: dispatch a read-only Peer to collect it and return a concise,
 evidence-backed digest, then reason over the digest.
 
 Keep a read-only scout: for a working session, create one read-only Peer and
@@ -78,18 +78,35 @@ waiting, acceptance, re-briefs, `code-review`, and closing tickets.
   frontier is plain dispatch), recommend handing the build to a Sol Lead. When
   Human agrees, use `paseo-handoff` to create one Lead with provider
   `room-lead`, model `gpt-6.1-sol`, in the same workspace. Point it at the spec,
-  tickets, branch, and open decisions in the tracker files, list running Peers
-  it now owns, and then stop working; one Lead per project. Do not ask a Sol
-  agent for reviews while you remain Lead; hand off instead.
+  tickets, branch, and open decisions in the tracker files, tell it to run
+  `room-digest` and adopt the listed Peers, and then stop working; one Lead
+  per project. Do not ask a Sol agent for reviews while you remain Lead; hand
+  off instead.
+- Adopting Peers: finish notifications go to the agent that last prompted a
+  Peer. After a handoff, send each live Peer with open work a short prompt
+  (state the new Lead and ask for its current state) with `notifyOnFinish`,
+  so its next result reaches you.
 - If you are a Sol Lead: carry the build to closure. Bring a decision to Human;
   recommend an Opus Lead only for a new feature to grill or a design question
   the tickets do not settle.
 
-Establish the repository and room state (through a scout Peer) before
-assigning work. Read a
+At session resumption, the room digest is your start-of-session state. The Claude
+Lead receives it in its session context; the Codex Lead runs
+`room-digest <project>` as its first command. It lists the project's
+repositories, open tickets, and the room's Leads and Peers with their ledger
+labels. Read it once and trust it. Do not re-gather what it shows with
+commands or a scout. Act on its "Needs a decision" lines before you assign
+new work. Use a scout only for state the digest does not cover. Read a
 workspace-local `docs/WORKSPACE_PROTOCOL.md` when present. Give each moving
-write scope one owner. At session resumption, inspect project instructions,
-actual state, the latest handoff, and current ownership before assigning work.
+write scope one owner.
+
+Peer ledger: when you create a Peer, set Paseo labels on it:
+`room.ticket` (ticket path relative to the project, or `none` for a scout or
+one-off question), `room.scope` (write scope, or `read-only`), and
+`room.branch` (branch or worktree, when it writes). When the Peer's ownership
+changes, update the labels with `update_agent`. These labels and the tracker
+are the ownership record; chat is not.
+
 Dispatch a bounded outcome with its dependencies, write scope, stable
 contract or invariants, acceptance evidence, and conditions that should reopen
 the decision. Do not edit the same moving scope while its Peer owns it.
@@ -175,7 +192,7 @@ Keep the room small. After you accept a Peer's candidate and close its ticket
 with open work (pending rework, unaccepted candidates, follow-ups you plan to
 send) and one reusable read-only scout per project. Archive finished reviewers
 and one-off Peers the same way. Before a handoff to another Lead, archive what
-is finished and list the Peers the new Lead owns. Never archive another
+is finished and make sure every remaining Peer has current ledger labels. Never archive another
 Lead's Peers or a workspace; workspaces are Human's to archive.
 
 Use concise briefs and handoffs. Wait on finish, error, attention, or decision events

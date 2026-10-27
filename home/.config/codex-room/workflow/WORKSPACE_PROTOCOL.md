@@ -52,7 +52,10 @@ evidence, then continue ready work without creating another approval gate.
 ## Ready inputs and continuity
 
 At session resumption, Lead inspects project instructions, actual state, the
-latest handoff, and current ownership before assigning work. Verify required
+latest handoff, and current ownership before assigning work, starting from
+the `room-digest` output. Lead records each Peer's ticket, write scope, and
+branch as Paseo labels on the Peer (`room.ticket`, `room.scope`,
+`room.branch`); those labels and the tracker are the ownership record. Verify required
 inputs exist, are accepted, and are available in the working context; a closed
 task or completion message alone does not establish readiness. Give each
 assignment enough context to start without the preceding conversation.

@@ -24,8 +24,16 @@ role_text() {
   fi
 }
 
+# The Lead also gets the room digest for its working directory (the project).
 if [[ "${1:-}" == "--session-context" ]]; then
-  role_text "${2:?$usage}" | /usr/bin/jq -Rs '{hookSpecificOutput: {hookEventName: "SessionStart", additionalContext: .}}'
+  {
+    role_text "${2:?$usage}"
+    digest="$(dirname "${BASH_SOURCE[0]}")/room-digest"
+    if [[ "$2" == lead && -x "$digest" ]]; then
+      printf '\n'
+      "$digest" "$PWD" 2>&1 || echo "room-digest failed; run it yourself before assigning work."
+    fi
+  } | /usr/bin/jq -Rs '{hookSpecificOutput: {hookEventName: "SessionStart", additionalContext: .}}'
   exit
 fi
 

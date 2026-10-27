@@ -36,6 +36,7 @@ FILES = [
     (".local/bin/codex-room", None, False, True),
     (".local/bin/codex-room-sync", None, False, True),
     (".local/bin/claude-room", None, False, True),
+    (".local/bin/room-digest", None, False, True),
     (".kiro/agents/room-peer.json", None, True, False),
     (".kiro/agents/room-peer-re.json", None, True, False),
     (".config/codex-room/opencode-peer/opencode.json", None, False, False),
