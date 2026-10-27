@@ -96,8 +96,22 @@ class RoomContractTests(unittest.TestCase):
             "Do not hand the build to another Lead",
             "provider `room-advisor`",
             "you still ACCEPT or REJECT every candidate yourself",
+            "Copy the playbook's numbered steps into your\ntask list word for word",
+            "`skip: <reason>`",
+            "Throughput checkpoint: before you dispatch writable work",
+            "`n/a: <reason>`",
+            "Cross-model review: for a non-trivial or risky candidate or spec",
+            "Send that same\nbrief, word for word, to a fresh read-only MiniMax Peer and a fresh Advisor",
+            "Act on",
+            "Do not\nACCEPT while an Act on finding is open",
         ):
             self.assertIn(rule, lead)
+        for name in ("bug-fix.md", "investigation.md", "refactoring.md", "pause-and-resume.md"):
+            self.assertIn(f"`{name}`", lead)
+            self.assertTrue((ROOM / "playbooks" / name).is_file(), name)
+        self.assertIn("Cross-model review. For a non-trivial or risky candidate", protocol)
+        self.assertIn("Reproduce first.", (ROOM / "playbooks" / "bug-fix.md").read_text())
+        self.assertIn("`<project>/.scratch/RESUME.md`", (ROOM / "playbooks" / "pause-and-resume.md").read_text())
         advisor = (ROOM / "overlays" / "advisor.config.toml").read_text()
         for rule in ("Room role: Advisor.", "Read only.", "do not address Human",
                      "You do not\naccept, reject, or approve anything"):
@@ -157,6 +171,8 @@ class InstallSlpTests(unittest.TestCase):
         for rel in (".local/bin/codex-room", ".local/bin/codex-room-sync", ".local/bin/claude-room",
                     ".local/bin/room-digest"):
             self.assertTrue(os.access(self.home / rel, os.X_OK), rel)
+        for name in ("bug-fix.md", "investigation.md", "refactoring.md", "pause-and-resume.md"):
+            self.assertTrue((self.home / ".config/codex-room/playbooks" / name).is_file(), name)
         peer = json.loads((self.home / ".kiro/agents/room-peer.json").read_text())
         self.assertEqual(peer["prompt"], f"file://{self.home}/.config/codex-room/roles/peer.md")
         config = json.loads((self.home / ".paseo/config.json").read_text())
@@ -331,6 +347,17 @@ class RoomDigestTests(unittest.TestCase):
         self.assertNotIn("Peer bbbbbbb has", out)
         self.assertNotIn("archived peer", out)
         self.assertNotIn("unrelated peer", out)
+
+    def test_digest_prints_the_resume_note_only_when_present(self) -> None:
+        run = lambda: subprocess.run([str(self.DIGEST), str(self.project)], env=self.env,
+                                     capture_output=True, text=True, check=True).stdout
+        self.assertNotIn("Resume note", run())
+        lines = [f"line {n}" for n in range(70)]
+        (self.project / ".scratch" / "RESUME.md").write_text("\n".join(["Next action: rerun repro", *lines]) + "\n")
+        out = run()
+        self.assertIn("## Resume note (.scratch/RESUME.md)\nNext action: rerun repro", out)
+        self.assertIn("... 11 more lines in .scratch/RESUME.md", out)
+        self.assertLess(out.index("Resume note"), out.index("## Open tickets"))
 
     def test_digest_fails_soft_without_a_paseo_store(self) -> None:
         env = {**self.env, "PASEO_HOME": str(Path(self.temporary.name) / "absent")}

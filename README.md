@@ -49,6 +49,17 @@ both Lead seats), `home/.config/codex-room/overlays/advisor.config.toml`,
 `home/.config/codex-room/roles/peer.md`, and the shared
 contract `home/.config/codex-room/workflow/WORKSPACE_PROTOCOL.md`.
 
+The Lead matches each task to a route. Features use the
+grill → spec → tickets → build loop; bug fixes, investigations, refactors,
+and pause/resume use short playbooks in `home/.config/codex-room/playbooks/`,
+read only when matched. Before writable dispatch the Lead writes a
+throughput checkpoint (blocking steps, independent workstreams, shared
+state, decomposition) in the tracker. A non-trivial or risky candidate gets
+a cross-model review: the same brief goes to a MiniMax Peer and the Advisor,
+and the Lead sorts findings into Act on / Consider / Noted / Dismissed before
+it accepts. A paused Lead leaves `.scratch/RESUME.md`, which `room-digest`
+prints at the next session start.
+
 ## Prerequisites
 
 - macOS (Linux is untested), Python 3.11+, `jq` at `/usr/bin/jq`.
@@ -89,7 +100,7 @@ paseo restart                  # or quit and reopen the Paseo app
 
 `install-slp` writes:
 
-- `~/.config/codex-room/` (Lead overlay, Peer role, workspace protocol,
+- `~/.config/codex-room/` (Lead overlay, Peer role, workspace protocol, Lead playbooks,
   `PONYTAIL.md`, OpenCode Peer config)
 - `~/.local/bin/codex-room`, `codex-room-sync`, `claude-room`, `room-digest`
 - `~/.kiro/agents/room-peer.json`, `room-peer-re.json`

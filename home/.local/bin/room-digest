@@ -3,7 +3,8 @@
 
 Usage: room-digest [PROJECT_DIR]    (default: current directory)
 
-One bounded, read-only block: the project's git repositories, its open
+One bounded, read-only block: the project's git repositories, the Lead's
+pause note (.scratch/RESUME.md) when present, its open
 local-markdown tickets (.scratch/<feature>/issues/*.md), and the room's live
 Leads, Advisors, and Peers with their ledger labels (room.ticket, room.scope,
 room.branch). The Claude Lead gets this through claude-room's SessionStart
@@ -26,6 +27,7 @@ import sys
 from pathlib import Path
 
 MAX_TICKETS = 30
+MAX_RESUME_LINES = 60
 CLOSED_STATUSES = {
     "done", "accepted", "resolved", "closed", "wontfix", "cancelled",
     "canceled", "rejected", "merged", "superseded",
@@ -199,6 +201,13 @@ def main() -> int:
     ]
     repos = repositories(project)
     out += [f"- {repo_line(project, repo)}" for repo in repos] or ["- none found"]
+
+    resume = project / ".scratch" / "RESUME.md"
+    if resume.is_file():
+        note = resume.read_text(errors="replace").splitlines()
+        out += ["", "## Resume note (.scratch/RESUME.md)"] + note[:MAX_RESUME_LINES]
+        if len(note) > MAX_RESUME_LINES:
+            out.append(f"... {len(note) - MAX_RESUME_LINES} more lines in .scratch/RESUME.md")
 
     out += ["", "## Open tickets (.scratch/*/issues)"]
     if not (project / "docs" / "agents" / "issue-tracker.md").exists():

@@ -86,8 +86,8 @@ decision or dependency needed.
 When architecture or an exact candidate carries material uncertainty, Lead may
 request a fresh read-only Peer review of the stable candidate or snapshot. The
 review uses the flexible Peer profile and a bounded question; no dedicated
-review role, mandatory form, or reviewer count is
-required.
+review role or mandatory form is required. A non-trivial or risky candidate
+or spec also gets the cross-model review (see Engineering skills).
 
 A review Peer starts with zero context. Its brief names the candidate or
 document, the bounded question, and the paths it may read. It carries no Lead
@@ -181,6 +181,22 @@ contract disagree, this contract wins.
 - `code-review`. Lead runs it by dispatching two fresh read-only Peers against
   the same fixed point, one for the Standards axis and one for the Spec axis,
   then reads both reports and explicitly accepts or rejects the candidate.
+- Cross-model review. For a non-trivial or risky candidate or spec, Lead
+  sends one identical zero-context brief (candidate, intent from the ticket
+  or spec, bounded question, readable paths) to a fresh read-only MiniMax
+  Peer and a fresh Advisor; a Kiro Peer joins as a third model only when
+  Human asks. Lead merges every review report, notes which model raised each
+  finding, and puts each in Act on, Consider, Noted, or Dismissed with a
+  one-line reason. A finding two models raised independently is the
+  strongest signal. The buckets go in the tracker with the acceptance
+  decision; no ACCEPT while an Act on finding is open.
+- Playbooks. Lead matches each task to a route: Feature uses the align,
+  plan, and build loop here; bug fix, investigation, refactoring, and pause
+  or resume use the playbooks in `~/.config/codex-room/playbooks/`. Lead
+  copies the matched playbook's steps into its task list and marks any
+  skipped step `skip: <reason>`. Before writable dispatch, Lead writes the
+  throughput checkpoint (blocking first steps, independent workstreams,
+  shared mutable state, smallest safe decomposition) in the tracker.
 - Ponytail. Every Peer carries `PONYTAIL.md`: before writing code it reuses
   what the codebase, standard library, platform, or installed dependencies
   already provide, writes the smallest complete change, never cuts validation,

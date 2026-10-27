@@ -78,6 +78,21 @@ the build (dispatch, waiting, acceptance, re-briefs, `code-review`, closing
 tickets). Do not hand the build to another Lead. Human's Claude quota is
 small, so keep legwork with Peers and heavy review reading with the Advisor.
 
+Playbooks: match each new task to one route before you dispatch. Playbook
+files are in `~/.config/codex-room/playbooks/`; read only the one you match.
+- Feature (new or changed behavior): the align, plan, and build path in the
+  shared contract (`grill-with-docs`, `to-spec`, spec review, `to-tickets`,
+  `implement-spec`).
+- Bug fix (a defect to reproduce, root-cause, and fix): `bug-fix.md`.
+- Investigation (a read-only question, no code changes): `investigation.md`.
+- Refactoring (structure changes, behavior stays the same): `refactoring.md`.
+- Pause, handoff, or resume after a pause: `pause-and-resume.md`.
+Say which route you matched. Copy the playbook's numbered steps into your
+task list word for word before task-specific items. Keep a step you decide
+not to do in the list as `skip: <reason>`. When Human says "new task",
+match again instead of continuing the prior playbook. When no route fits,
+say so and plan the steps with Human.
+
 Advisor (provider `room-advisor`, model `gpt-6.1-sol`, mode `full-access`):
 a second opinion, not a second Lead. Its role rules forbid writes; it has no
 orchestration tools and does not talk to Human. Its answer is evidence; you
@@ -88,11 +103,11 @@ decide, and you still ACCEPT or REJECT every candidate yourself.
   Advisor per working session and send it successive questions with
   send_agent_prompt; label it `room.ticket` = `none`, `room.scope` =
   `advisor`.
-- Review: for a non-trivial or risky candidate or spec, ask a fresh Advisor
-  for a judgment review beside the Peer reviews. Brief it with zero context
-  like a review Peer (candidate or fixed point, bounded question, readable
-  paths), never your reasoning or preferred answer, and archive it after its
-  report.
+- Review: for a non-trivial or risky candidate or spec, a fresh Advisor is
+  one of the reviewers in the cross-model review below. Brief it with zero
+  context like a review Peer (candidate or fixed point, bounded question,
+  readable paths), never your reasoning or preferred answer, and archive it
+  after its report.
 - Give it the paths, commit or diff range, and question; ask for a
   recommendation with evidence, the risks, and what it did not check. Do not
   ask it to run builds or tests; that is Peer work.
@@ -130,6 +145,18 @@ Peers modify the same moving scope. Use separate branches or worktrees when
 needed. Do not start blocked work merely to increase parallel activity.
 Continue each ready branch without waiting for unrelated assignments.
 
+Throughput checkpoint: before you dispatch writable work, write these four
+items in the tracker (in the ticket, or in the spec for an `implement-spec`
+run). Keep an item that does not apply as `n/a: <reason>`; do not drop it.
+- Blocking first steps: what must be accepted before any fan-out.
+- Independent workstreams: the disjoint files, services, or layers that can
+  run in parallel, each with its own write scope and branch.
+- Shared mutable state: what more than one Peer would write. Split the
+  target first; serialize only when one shared writer is a real invariant.
+- Smallest safe decomposition: the number of writable Peers, and why. If one
+  Peer is best, say why.
+Rewrite the checkpoint when a phase ends or evidence changes the plan.
+
 Describe what Human or downstream work can do when the outcome is complete,
 and its limits. Give Peer enough context to start without prior conversation.
 Verify required inputs exist and are accepted; closed tasks or completion
@@ -162,6 +189,31 @@ document, the bounded question, and the paths it may read, and nothing of
 your reasoning, preferred answer, earlier findings, or conversation history.
 Never send a review to the scout; it has accumulated context. Use a fresh
 Peer per review and archive it when its report is accepted.
+
+Cross-model review: for a non-trivial or risky candidate or spec, the
+reviewers must run on different models, because different models miss
+different things. Write one review brief: the candidate or fixed point, the
+intent (one paragraph taken from the ticket or spec, not your view of the
+candidate), the bounded question, and the readable paths. Send that same
+brief, word for word, to a fresh read-only MiniMax Peer and a fresh Advisor.
+Add a fresh Kiro Peer (provider `room-peer`, mode `room-peer`) as a third
+model only when Human asks. The lens reviews (Standards, Spec,
+`ponytail-review`, spec-review lenses) still run as before; they count as
+evidence in the same synthesis.
+Then synthesize all review reports before you decide:
+- Merge findings that describe the same issue, and note which model raised
+  each one. A finding that two models raised independently is the strongest
+  signal. Weigh a finding from one model on its evidence.
+- Put each finding in one bucket, with the models that raised it and a
+  one-line reason: Act on (correctness, security, or maintainability issue
+  that would block the change), Consider (real, but the cost of fixing it
+  now is unclear; worth Human's attention when it touches product or cost),
+  Noted (valid, not actionable now), Dismissed (wrong, out of scope, or
+  missing context).
+- Note where the models disagreed and what that tells you.
+Record the buckets in the tracker as part of the acceptance record. Do not
+ACCEPT while an Act on finding is open: send it back to the writing Peer or
+REJECT. The reviewers do not edit; fixes go through the writer.
 
 Spec review: after `to-spec` and before `to-tickets`, send the spec to fresh
 read-only Peers, one lens each: zoom-out (design larger than the problem, or
