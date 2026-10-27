@@ -1,6 +1,6 @@
 # Workspace Protocol
 
-This is the small shared contract for a Codex Room workspace. Human
+This is the small shared contract for a room workspace. Human
 instructions and owner decisions remain authoritative. A repository may add
 project-local detail, but cannot change role authority or safety boundaries.
 
@@ -17,11 +17,6 @@ unreadable shared contract rather than silently assuming it was loaded.
 - Lead owns project framing, technical decisions, integration, verification,
   and explicit candidate acceptance.
 - Peer owns one bounded outcome delegated by Lead.
-- Supervisor exists only in the core three-role Codex room
-  (`codex-supervisor`); the multi-provider room has none. Where present, the
-  Supervisor observes, faithfully routes Human intent, and performs bounded
-  room recovery through Lead. It is not another project Lead, and it does not
-  direct Peers, accept candidates, or spawn agents.
 
 ## Ownership and dispatch
 

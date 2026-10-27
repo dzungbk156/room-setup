@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-usage="usage: codex-room <supervisor|lead|peer> [codex args...]"
+usage="usage: codex-room lead [codex args...]"
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 sync_bin="${CODEX_ROOM_SYNC_BIN:-${script_dir}/codex-room-sync}"
@@ -15,7 +15,7 @@ role="${1:?$usage}"
 shift
 
 case "$role" in
-  supervisor|lead|peer) ;;
+  lead) ;;
   *) echo "unknown role: $role" >&2; exit 2 ;;
 esac
 

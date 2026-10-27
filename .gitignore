@@ -22,7 +22,3 @@ home/.paseo/*.pid
 *.sqlite-shm
 *.sqlite-wal
 
-# Generated audit snapshots are local unless intentionally promoted
-runtime/snapshots/*/
-!runtime/snapshots/.gitkeep
-
