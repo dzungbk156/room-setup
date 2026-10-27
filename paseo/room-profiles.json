@@ -10,14 +10,14 @@
     "notes": "Room Lead. Owns technical decisions, dispatches Peers, accepts or rejects candidates. One Lead per project."
   },
   {
-    "id": "room-lead-sol61",
-    "name": "Lead (Sol 6.1)",
+    "id": "room-advisor",
+    "name": "Advisor (Sol 6.1)",
     "icon": "codex",
-    "provider": "room-lead",
+    "provider": "room-advisor",
     "model": "gpt-6.1-sol",
     "modeId": "full-access",
-    "thinkingOptionId": "medium",
-    "notes": "Room Lead on Codex gpt-6.1-sol (trial). Same authority as the other Lead seats; one Lead per project."
+    "thinkingOptionId": "high",
+    "notes": "Room Advisor on Codex gpt-6.1-sol. Second opinion and reviewer for the Lead; reads only, decides nothing. Created only by the Lead."
   },
   {
     "id": "room-lead-claude",
@@ -27,7 +27,7 @@
     "model": "claude-opus-5-5",
     "modeId": "bypassPermissions",
     "thinkingOptionId": "high",
-    "notes": "Room Lead on Claude Opus 5.5, for demanding projects. Same authority as Lead (Astra); one Lead per project."
+    "notes": "Room Lead on Claude Opus 5.5: the Lead Human works with, from grilling through build and acceptance. Consults the Sol Advisor. One Lead per project."
   },
   {
     "id": "room-peer",

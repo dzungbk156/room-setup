@@ -1,16 +1,18 @@
 # Room Setup
 
 Configuration for an agent "room" that runs inside [Paseo](https://github.com/getpaseo/paseo):
-one **Lead** agent frames the work and accepts results, and short-lived **Peer**
-agents each own one bounded task. Human keeps product, cost, external-effect,
-and irreversible decisions.
+one **Lead** agent frames the work and accepts results, an **Advisor** gives the
+Lead second opinions and reviews, and short-lived **Peer** agents each own one
+bounded task. Human keeps product, cost, external-effect, and irreversible
+decisions.
 
 ## Layout
 
 ```text
 Paseo
-  ├─ room-lead          Codex (gpt-6-astra or gpt-6.1-sol) via codex-room lead
   ├─ room-lead-claude   Claude Code (claude-opus-5-5) via claude-room lead
+  ├─ room-lead          Codex (gpt-6-astra) via codex-room lead
+  ├─ room-advisor       Codex (gpt-6.1-sol) via codex-room advisor
   ├─ room-peer-minimax  OpenCode (MiniMax M3.1 Flash), default Peer
   └─ room-peer          Kiro CLI (claude-opus-4.5), modes room-peer / room-peer-re
 ```
@@ -23,24 +25,28 @@ any custom providers already in your config.
 
 | Profile | Provider | Model | Use |
 | --- | --- | --- | --- |
-| Lead (Astra) | `room-lead` | `gpt-6-astra` | Default Codex Lead |
-| Lead (Sol 6.1) | `room-lead` | `gpt-6.1-sol` | Build phase: dispatch, acceptance, review |
-| Lead (Opus) | `room-lead-claude` | `claude-opus-5-5` | Thinking with Human: grilling, specs, tickets |
+| Lead (Opus) | `room-lead-claude` | `claude-opus-5-5` | The Lead Human works with: grilling, specs, tickets, build, acceptance |
+| Lead (Astra) | `room-lead` | `gpt-6-astra` | Codex Lead, when Human starts one instead |
+| Advisor (Sol 6.1) | `room-advisor` | `gpt-6.1-sol` | Second opinions and reviews for the Lead; reads only |
 | Peer (MiniMax) | `room-peer-minimax` | MiniMax M3.1 Flash | Every Peer by default |
 | Peer | `room-peer` | `claude-opus-4.5` | Only when Human asks |
 | Peer (REA) | `room-peer` (mode `room-peer-re`) | `claude-opus-4.5` | Reverse engineering only |
 
-Start one Lead per project from the Paseo app. The Lead creates Peers itself.
+Start one Lead per project from the Paseo app. The Lead creates Peers and the
+Advisor itself. The Advisor has no orchestration tools and its role forbids
+writes; Paseo's Codex modes have no read-only option, so it runs in
+`full-access` and the read-only limit is a role rule, not a sandbox.
 
 At session start the Lead reads `room-digest` for its project: git state, open
-`.scratch` tickets, and the room's Leads and Peers. The Claude Lead gets it in
+`.scratch` tickets, and the room's Leads, Advisors, and Peers. The Claude Lead gets it in
 its session context; the Codex Lead runs it first. The Lead labels each Peer
 with `room.ticket`, `room.scope`, and `room.branch`, so the digest shows who
 owns what after a restart or a Lead handoff. The digest reads Paseo's on-disk
 agent records (`~/.paseo/agents`), which is Paseo's internal format; recheck
 it after a Paseo upgrade.
 Role rules live in `home/.config/codex-room/overlays/lead.config.toml` (shared by
-both Lead seats), `home/.config/codex-room/roles/peer.md`, and the shared
+both Lead seats), `home/.config/codex-room/overlays/advisor.config.toml`,
+`home/.config/codex-room/roles/peer.md`, and the shared
 contract `home/.config/codex-room/workflow/WORKSPACE_PROTOCOL.md`.
 
 ## Prerequisites

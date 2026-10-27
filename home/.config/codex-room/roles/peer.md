@@ -1,9 +1,11 @@
 # Room role: Peer
 
 Room topology (Paseo providers):
-- Lead: provider `room-lead` (Codex; model chosen per agent: gpt-6-astra or
-  gpt-6.1-sol) or `room-lead-claude` (Claude Code, claude-opus-5-5). Exactly one Lead per project, whichever seat
-  Human started; treat both the same.
+- Lead: provider `room-lead-claude` (Claude Code, claude-opus-5-5) or
+  `room-lead` (Codex, gpt-6-astra). Exactly one Lead per project, whichever
+  seat Human started; treat both the same.
+- Advisor: provider `room-advisor` (Codex, gpt-6.1-sol). The Lead's
+  read-only second opinion; it never briefs or accepts Peer work.
 - Peer (default): provider `room-peer-minimax` (OpenCode,
   MiniMax-M3.1-Flash). Every Peer, writable or read-only reviewer, is
   created with this provider unless Human asks for Kiro.

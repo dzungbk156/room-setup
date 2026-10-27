@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Materialize the isolated CODEX_HOME for the Codex Lead seat."""
+"""Materialize the isolated CODEX_HOME for a Codex room seat (Lead or Advisor)."""
 
 import fnmatch
 import json
@@ -14,6 +14,7 @@ import tempfile
 
 ROLE_FILES = {
     "lead": "lead.config.toml",
+    "advisor": "advisor.config.toml",
 }
 OVERRIDE_KEYS = {
     "model",

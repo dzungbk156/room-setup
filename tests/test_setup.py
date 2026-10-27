@@ -44,7 +44,8 @@ class RoomContractTests(unittest.TestCase):
 
     def test_paseo_templates_give_orchestration_tools_only_to_leads(self) -> None:
         providers = json.loads(PROVIDERS.read_text())
-        self.assertEqual(sorted(providers), ["room-lead", "room-lead-claude", "room-peer", "room-peer-minimax"])
+        self.assertEqual(sorted(providers),
+                         ["room-advisor", "room-lead", "room-lead-claude", "room-peer", "room-peer-minimax"])
         for name, spec in providers.items():
             self.assertEqual(spec["paseoTools"]["enabled"], name.startswith("room-lead"), name)
         profiles = json.loads(PROFILES.read_text())
@@ -52,6 +53,11 @@ class RoomContractTests(unittest.TestCase):
         lead_overlay = (ROOM / "overlays" / "lead.config.toml").read_text()
         default_lead = next(p for p in profiles if p["id"] == "room-lead")
         self.assertIn(f'model = "{default_lead["model"]}"', lead_overlay)
+        advisor = next(p for p in profiles if p["id"] == "room-advisor")
+        self.assertEqual(providers["room-advisor"]["command"][-1], "advisor")
+        self.assertIn(f'model = "{advisor["model"]}"', (ROOM / "overlays" / "advisor.config.toml").read_text())
+        self.assertNotIn("room-lead-sol61", [p["id"] for p in profiles])
+        self.assertNotIn("gpt-6.1-sol", [m["id"] for m in providers["room-lead"]["models"]])
 
     def test_role_contracts(self) -> None:
         protocol = (ROOM / "workflow" / "WORKSPACE_PROTOCOL.md").read_text()
@@ -87,8 +93,16 @@ class RoomContractTests(unittest.TestCase):
             "create a Kiro Peer (provider `room-peer`) in mode `room-peer-re`",
             "Use mode `build` for\nPeers that write and mode `plan` for read-only Peers",
             "Do not use your harness's built-in subagents",
+            "Do not hand the build to another Lead",
+            "provider `room-advisor`",
+            "you still ACCEPT or REJECT every candidate yourself",
         ):
             self.assertIn(rule, lead)
+        advisor = (ROOM / "overlays" / "advisor.config.toml").read_text()
+        for rule in ("Room role: Advisor.", "Read only.", "do not address Human",
+                     "You do not\naccept, reject, or approve anything"):
+            self.assertIn(rule, advisor)
+        self.assertIn("Advisor gives Lead second opinions and reviews", protocol)
         for rule in (
             "Peer (default): provider `room-peer-minimax`",
             "notify Lead before making those changes",
@@ -96,8 +110,9 @@ class RoomContractTests(unittest.TestCase):
             "Do not spawn, manage, or coordinate other agents",
         ):
             self.assertIn(rule, peer)
-        for text in (protocol, lead, peer):
+        for text in (protocol, lead, peer, advisor):
             self.assertNotIn("Supervisor", text)
+        self.assertNotIn("Sol Lead", lead)
 
 
 class InstallSlpTests(unittest.TestCase):
@@ -152,6 +167,13 @@ class InstallSlpTests(unittest.TestCase):
         runtime = (self.home / ".codex-runtime/lead/config.toml").read_text()
         self.assertIn('model = "gpt-6-astra"', runtime)
         self.assertIn("multi_agent = false", runtime)
+        advisor_runtime = (self.home / ".codex-runtime/advisor/config.toml").read_text()
+        self.assertIn('model = "gpt-6.1-sol"', advisor_runtime)
+        self.assertIn("Room role: Advisor.", advisor_runtime)
+        profile_ids = [p["id"] for p in config["daemon"]["agentProfiles"]]
+        self.assertIn("room-advisor", profile_ids)
+        self.assertNotIn("room-lead-sol61", profile_ids)
+        self.assertFalse(providers["room-advisor"]["paseoTools"]["enabled"])
         self.assertEqual(snapshot(self.home / ".codex"), codex_before)
 
         second = self.install("--apply").stdout
@@ -186,7 +208,8 @@ class LeadRuntimeTests(unittest.TestCase):
             '[mcp_servers.example]\nurl = "https://example.invalid/mcp"\n\n'
             '[features]\nmulti_agent = true\nmulti_agent_v2 = true\n\n[agents]\nenabled = true\n'
         )
-        (self.canonical / "lead.config.toml").write_text((ROOM / "overlays" / "lead.config.toml").read_text())
+        for overlay in ("lead.config.toml", "advisor.config.toml"):
+            (self.canonical / overlay).write_text((ROOM / "overlays" / overlay).read_text())
         for name in ("auth.json", "AGENTS.md", "hooks.json", "model-instructions.md"):
             (self.canonical / name).write_text("{}\n" if name.endswith(".json") else "fixture\n")
         for name in ("skills", "plugins"):
@@ -217,7 +240,15 @@ class LeadRuntimeTests(unittest.TestCase):
         self.assertEqual(self.sync("lead").returncode, 0)
         self.assertEqual((runtime / "config.toml").read_bytes(), first)
 
-    def test_only_the_lead_role_exists(self) -> None:
+    def test_advisor_runtime_is_separate_from_the_lead(self) -> None:
+        self.assertEqual(self.sync("advisor").returncode, 0)
+        config = (self.root / ".runtime" / "advisor" / "config.toml").read_text()
+        self.assertIn('model = "gpt-6.1-sol"', config)
+        self.assertIn("Room role: Advisor.", config)
+        self.assertNotIn("Room role: Lead.", config)
+        self.assertIn("[agents]\nenabled = false", config)
+
+    def test_only_the_lead_and_advisor_roles_exist(self) -> None:
         for role in ("supervisor", "peer", "review"):
             with self.subTest(role=role):
                 self.assertIn("usage:", self.sync(role).stderr)
@@ -271,6 +302,8 @@ class RoomDigestTests(unittest.TestCase):
         agent("b" * 36, provider="room-peer-minimax", cwd=str(root / "worktree"), title="labelled peer",
               labels={"paseo.parent-agent-id": lead, "room.ticket": ".scratch/feat/issues/01-open.md",
                       "room.scope": "src/", "room.branch": "feat/01"})
+        agent("9" * 36, provider="room-advisor", cwd=str(self.project), title="the advisor",
+              labels={"paseo.parent-agent-id": lead, "room.ticket": "none", "room.scope": "advisor"})
         agent("c" * 36, provider="room-peer", cwd=str(self.project), title="orphan peer",
               labels={"paseo.parent-agent-id": gone})
         agent("d" * 36, provider="room-peer", cwd=str(self.project), title="archived peer",
@@ -289,6 +322,8 @@ class RoomDigestTests(unittest.TestCase):
         self.assertIn("(blocked by: 01-open.md)", out)
         self.assertNotIn("03-done.md", out)
         self.assertIn("aaaaaaa room-lead-claude", out)
+        self.assertIn("Advisors:\n- 9999999 room-advisor", out)
+        self.assertNotIn("Leads are not archived", out)
         self.assertIn("ticket=.scratch/feat/issues/01-open.md scope=src/ branch=feat/01 lead=aaaaaaa", out)
         self.assertIn("lead=fffffff(missing)", out)
         self.assertIn("Peer ccccccc has no room.ticket label", out)

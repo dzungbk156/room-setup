@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Install the multi-provider SLP room profiles.
 
-Lead -> Codex (codex-room) or Claude Code (claude-room), Peers -> Kiro CLI
+Lead -> Claude Code (claude-room) or Codex (codex-room), Advisor -> Codex
+(codex-room advisor), Peers -> Kiro CLI
 (room-peer agents) or OpenCode (MiniMax). Does not build or replace Paseo, and does
 not touch ~/.codex, ~/.claude, or Kiro auth. Every replaced file is backed up.
 
@@ -32,6 +33,7 @@ FILES = [
     (".config/codex-room/workflow/WORKSPACE_PROTOCOL.md", None, False, False),
     (".config/codex-room/workflow/PONYTAIL.md", None, False, False),
     (".config/codex-room/overlays/lead.config.toml", None, False, False),
+    (".config/codex-room/overlays/advisor.config.toml", None, False, False),
     (".config/codex-room/roles/peer.md", None, False, False),
     (".local/bin/codex-room", None, False, True),
     (".local/bin/codex-room-sync", None, False, True),
@@ -50,7 +52,7 @@ PASEO_CONFIG = HOME / ".paseo" / "config.json"
 MANIFEST = HOME / ".config" / "codex-room" / ".install-slp-manifest.json"
 REQUIRED_BINS = ["codex", "claude", "kiro-cli", "opencode"]
 # Retired room seats: removed from Paseo config; installed files backed up, then deleted.
-RETIRED_IDS = ["room-supervisor"]
+RETIRED_IDS = ["room-supervisor", "room-lead-sol61"]
 RETIRED_FILES = [".config/codex-room/roles/supervisor.md"]
 # Built-in providers that must not receive Paseo orchestration tools.
 NON_ROOM_PROVIDERS = ["claude", "codex", "opencode", "copilot", "pi", "omp", "kiro"]
@@ -171,8 +173,9 @@ def main() -> None:
         tmp.write_text(json.dumps(config, indent=2) + "\n")
         os.replace(tmp, PASEO_CONFIG)
 
-        subprocess.run([str(HOME / ".local/bin/codex-room-sync"), "lead"], check=True)
-        print("synced     ~/.codex-runtime/lead")
+        for role in ("lead", "advisor"):
+            subprocess.run([str(HOME / ".local/bin/codex-room-sync"), role], check=True)
+            print(f"synced     ~/.codex-runtime/{role}")
         if backup_root.exists():
             backup_root.chmod(0o700)
             print(f"backups    {backup_root}")

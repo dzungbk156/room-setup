@@ -27,25 +27,6 @@
             "label": "High"
           }
         ]
-      },
-      {
-        "id": "gpt-6.1-sol",
-        "label": "Sol 6.1",
-        "thinkingOptions": [
-          {
-            "id": "medium",
-            "label": "Medium",
-            "isDefault": true
-          },
-          {
-            "id": "high",
-            "label": "High"
-          },
-          {
-            "id": "xhigh",
-            "label": "Extra high"
-          }
-        ]
       }
     ],
     "paseoTools": {
@@ -84,6 +65,44 @@
     ],
     "paseoTools": {
       "enabled": true
+    }
+  },
+  "room-advisor": {
+    "extends": "codex",
+    "label": "Room Advisor",
+    "description": "Advisor seat: Codex (Sol 6.1) second opinion and reviewer for the Lead; reads only, no orchestration tools",
+    "command": [
+      "@@HOME@@/.local/bin/codex-room",
+      "advisor"
+    ],
+    "params": {
+      "sandbox_mode": "danger-full-access",
+      "approval_policy": "never"
+    },
+    "models": [
+      {
+        "id": "gpt-6.1-sol",
+        "label": "Sol 6.1",
+        "thinkingOptions": [
+          {
+            "id": "high",
+            "label": "High",
+            "isDefault": true
+          },
+          {
+            "id": "xhigh",
+            "label": "Extra high"
+          },
+          {
+            "id": "medium",
+            "label": "Medium"
+          }
+        ],
+        "isDefault": true
+      }
+    ],
+    "paseoTools": {
+      "enabled": false
     }
   },
   "room-peer": {

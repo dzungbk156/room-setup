@@ -5,7 +5,7 @@ Usage: room-digest [PROJECT_DIR]    (default: current directory)
 
 One bounded, read-only block: the project's git repositories, its open
 local-markdown tickets (.scratch/<feature>/issues/*.md), and the room's live
-Leads and Peers with their ledger labels (room.ticket, room.scope,
+Leads, Advisors, and Peers with their ledger labels (room.ticket, room.scope,
 room.branch). The Claude Lead gets this through claude-room's SessionStart
 hook; the Codex Lead runs it as its first command.
 
@@ -145,13 +145,15 @@ def room_agents(project: Path, agents: dict[str, dict]) -> tuple[list[str], list
             text += f", needs attention ({record.get('attentionReason') or 'unknown'})"
         return text
 
-    leads, peers, warnings = [], [], []
+    leads, advisors, peers, warnings = [], [], [], []
     live = [r for r in agents.values() if not r.get("archivedAt") and belongs(r)]
     for record in sorted(live, key=lambda r: r.get("createdAt") or ""):
         provider = str(record.get("provider") or "")
         line = f"{short(record['id'])} {provider} {state(record)} \"{record.get('title') or ''}\""
         if provider.startswith("room-lead"):
             leads.append(line)
+        elif provider == "room-advisor":
+            advisors.append(line)
         elif provider.startswith("room-peer"):
             tags = labels(record)
             ledger = " ".join(f"{key[5:]}={tags[key]}" for key in LEDGER_KEYS if tags.get(key))
@@ -175,7 +177,7 @@ def room_agents(project: Path, agents: dict[str, dict]) -> tuple[list[str], list
             f"{len(leads)} Leads are not archived; the room runs one Lead per project. "
             "Ask Human which earlier Leads to archive."
         )
-    return leads, peers, warnings
+    return leads, advisors, peers, warnings
 
 
 def main() -> int:
@@ -210,9 +212,11 @@ def main() -> int:
     if not (paseo_home / "agents").is_dir():
         out.append(f"- Paseo agent store not readable at {paseo_home / 'agents'}; use list_agents.")
     else:
-        leads, peers, warnings = room_agents(project, read_agents(paseo_home))
+        leads, advisors, peers, warnings = room_agents(project, read_agents(paseo_home))
         out.append("Leads:")
         out += [f"- {line}" for line in leads] or ["- none"]
+        out.append("Advisors:")
+        out += [f"- {line}" for line in advisors] or ["- none"]
         out.append("Peers:")
         out += [f"- {line}" for line in peers] or ["- none"]
         if warnings:

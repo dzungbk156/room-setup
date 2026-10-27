@@ -17,6 +17,8 @@ unreadable shared contract rather than silently assuming it was loaded.
 - Lead owns project framing, technical decisions, integration, verification,
   and explicit candidate acceptance.
 - Peer owns one bounded outcome delegated by Lead.
+- Advisor gives Lead second opinions and reviews. It reads only, owns no
+  outcome, and decides nothing; its answers are evidence for Lead.
 
 ## Ownership and dispatch
 
