@@ -117,5 +117,10 @@ done
 # Always use the Claude subscription login, never a third-party gateway.
 unset ANTHROPIC_BASE_URL ANTHROPIC_AUTH_TOKEN ANTHROPIC_API_KEY
 
+# Compact the Lead at 400k tokens instead of near the 1M window: a long Lead
+# session re-sends its whole context each turn. The env var outranks any
+# saved /autocompact value.
+export CLAUDE_CODE_AUTO_COMPACT_WINDOW=400000
+
 claude_bin="${CLAUDE_BIN:-$(command -v claude || echo "${HOME}/.local/bin/claude")}"
 exec "$claude_bin" ${extra_args[@]+"${extra_args[@]}"} ${args[@]+"${args[@]}"}

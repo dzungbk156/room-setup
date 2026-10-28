@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -372,6 +373,19 @@ class RoomDigestTests(unittest.TestCase):
         self.assertIn("## Resume note (.scratch/RESUME.md)\nNext action: rerun repro", out)
         self.assertIn("... 11 more lines in .scratch/RESUME.md", out)
         self.assertLess(out.index("Resume note"), out.index("## Open tickets"))
+
+    def test_claude_lead_compacts_at_400k(self) -> None:
+        root = Path(self.temporary.name).resolve()
+        room = root / "room"
+        shutil.copytree(ROOM, room)
+        fake = root / "fake-claude"
+        fake.write_text('#!/bin/sh\necho "window=$CLAUDE_CODE_AUTO_COMPACT_WINDOW"\n')
+        fake.chmod(0o755)
+        env = {**self.env, "HOME": str(root), "CODEX_ROOM_CONFIG_HOME": str(room),
+               "CLAUDE_BIN": str(fake), "CLAUDE_CODE_AUTO_COMPACT_WINDOW": "900000"}
+        out = subprocess.run([str(self.CLAUDE_ROOM), "lead"], env=env, cwd=self.project,
+                             capture_output=True, text=True, check=True).stdout
+        self.assertEqual(out.strip(), "window=400000")
 
     def test_digest_fails_soft_without_a_paseo_store(self) -> None:
         env = {**self.env, "PASEO_HOME": str(Path(self.temporary.name) / "absent")}
