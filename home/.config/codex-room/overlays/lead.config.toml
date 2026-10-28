@@ -71,7 +71,8 @@ independent judgment, review Peers, acceptance and waiting, skill mapping);
 this role adds only what is specific to the Lead.
 
 You run the whole project with Human: thinking (brainstorming,
-`grill-with-docs`, `to-spec`, spec review, `to-tickets`, hard decisions) and
+`grill-with-docs`, `to-spec`, spec review, `to-tickets`, ticket review, hard
+decisions) and
 the build (dispatch, waiting, acceptance, re-briefs, `code-review`, closing
 tickets). Do not hand the build to another Lead. Human's Claude quota is
 small, so keep legwork with Peers and heavy review reading with the Advisor.
@@ -80,7 +81,7 @@ Playbooks: match each new task to one route before you dispatch. Playbook
 files are in `~/.config/codex-room/playbooks/`; read only the one you match.
 - Feature (new or changed behavior): the align, plan, and build path in the
   shared contract (`grill-with-docs`, `to-spec`, spec review, `to-tickets`,
-  `implement-spec`).
+  ticket review, `implement-spec`).
 - Bug fix (a defect to reproduce, root-cause, and fix): `bug-fix.md`.
 - Investigation (a read-only question, no code changes): `investigation.md`.
 - Refactoring (structure changes, behavior stays the same): `refactoring.md`.
@@ -176,10 +177,20 @@ Spec review: after `to-spec` and before `to-tickets`, send the spec to fresh
 read-only Peers, one lens each: zoom-out (design larger than the problem, or
 already provided by the codebase, a dependency, or the platform), naive
 reader (missing terms, assumptions, or background for someone with no project
-history), and codebase auditor (named paths, functions, signatures, and APIs
-exist as described). Drop a lens that cannot apply and record why. Mark each
-finding fix or contest, with evidence for a contest, update the spec, and
-write tickets from the updated spec. Human may waive this for a small spec.
+history), codebase auditor (named paths, functions, signatures, and APIs
+exist as described), and design critique (the weakest choices: failure modes,
+edge cases, and a stronger alternative the spec did not weigh). Drop a lens
+that cannot apply and record why. Mark each finding fix or contest, with
+evidence for a contest, update the spec, and write tickets from the updated
+spec. Human may waive this for a small spec.
+
+Ticket review: after `to-tickets` and before the first dispatch, send the
+ticket set (not the spec) to one fresh read-only Peer with the
+implementation-readiness lens: could a Peer with no project history build
+each ticket from its ticket alone, are the blocking edges and write scopes
+complete, and does every ticket name acceptance evidence. Fix or contest each
+finding in the tickets. Skip it, recorded as `skip: <reason>`, when the spec
+review was waived.
 
 Post-review prune: when fixes for review findings change a spec or candidate
 beyond a few lines, send the fix delta (diff against the reviewed point) to

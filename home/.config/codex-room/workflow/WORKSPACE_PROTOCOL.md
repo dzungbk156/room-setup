@@ -138,7 +138,7 @@ contract disagree, this contract wins.
   `wayfinder`, `triage`, `improve-codebase-architecture`, `ask-matt`,
   `implement-spec` (orchestration, see below), and `retro` after a session.
 - Lead procedures. Spec review (after `to-spec`, before `to-tickets`),
-  cross-model review, post-review prune, playbook routing, and the
+  ticket review (after `to-tickets`, before dispatch), cross-model review, post-review prune, playbook routing, and the
   throughput checkpoint are defined in the Lead role
   (`~/.config/codex-room/overlays/lead.config.toml`). Lead follows them;
   Peers and the Advisor only receive their briefs.

@@ -89,6 +89,9 @@ class RoomContractTests(unittest.TestCase):
             self.assertIn(capability, protocol)
         for rule in (
             "Spec review: after `to-spec` and before `to-tickets`",
+            "design critique (the weakest choices",
+            "Ticket review: after `to-tickets` and before the first dispatch",
+            "implementation-readiness lens",
             "Post-review prune",
             "At session resumption",
             "create a duplicate tracker",
