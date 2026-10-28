@@ -26,7 +26,7 @@
     "provider": "room-lead-claude",
     "model": "claude-opus-5-5",
     "modeId": "bypassPermissions",
-    "thinkingOptionId": "high",
+    "thinkingOptionId": "medium",
     "notes": "Room Lead on Claude Opus 5.5: the Lead Human works with, from grilling through build and acceptance. Consults the Sol Advisor. One Lead per project."
   },
   {

@@ -48,17 +48,17 @@
         "isDefault": true,
         "thinkingOptions": [
           {
-            "id": "high",
-            "label": "High",
+            "id": "medium",
+            "label": "Medium",
             "isDefault": true
+          },
+          {
+            "id": "high",
+            "label": "High"
           },
           {
             "id": "xhigh",
             "label": "Extra high"
-          },
-          {
-            "id": "medium",
-            "label": "Medium"
           }
         ]
       }

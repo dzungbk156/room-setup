@@ -53,6 +53,12 @@ class RoomContractTests(unittest.TestCase):
         lead_overlay = (ROOM / "overlays" / "lead.config.toml").read_text()
         default_lead = next(p for p in profiles if p["id"] == "room-lead")
         self.assertIn(f'model = "{default_lead["model"]}"', lead_overlay)
+        # Opus 5.5 at medium effort matches Opus 5 at high; start the Lead there.
+        opus_lead = next(p for p in profiles if p["id"] == "room-lead-claude")
+        self.assertEqual(opus_lead["thinkingOptionId"], "medium")
+        opus_default = [o["id"] for o in providers["room-lead-claude"]["models"][0]["thinkingOptions"]
+                        if o.get("isDefault")]
+        self.assertEqual(opus_default, ["medium"])
         advisor = next(p for p in profiles if p["id"] == "room-advisor")
         self.assertEqual(providers["room-advisor"]["command"][-1], "advisor")
         self.assertIn(f'model = "{advisor["model"]}"', (ROOM / "overlays" / "advisor.config.toml").read_text())
@@ -77,14 +83,13 @@ class RoomContractTests(unittest.TestCase):
             "repeatedly polling unchanged state",
             "A review Peer starts with zero context",
             "it never performs a review",
-            "Spec review. After `to-spec` and before `to-tickets`",
-            "Post-review prune",
+            "Lead procedures. Spec review",
             "default Peer provider\n  `room-peer-minimax`",
         ):
             self.assertIn(capability, protocol)
         for rule in (
-            "Run writable Peers in parallel only",
-            "Sequence changes to shared files or interfaces",
+            "Spec review: after `to-spec` and before `to-tickets`",
+            "Post-review prune",
             "At session resumption",
             "create a duplicate tracker",
             "explicitly ACCEPT or REJECT",
@@ -109,7 +114,13 @@ class RoomContractTests(unittest.TestCase):
         for name in ("bug-fix.md", "investigation.md", "refactoring.md", "pause-and-resume.md"):
             self.assertIn(f"`{name}`", lead)
             self.assertTrue((ROOM / "playbooks" / name).is_file(), name)
-        self.assertIn("Cross-model review. For a non-trivial or risky candidate", protocol)
+        # Each rule lives in one place: Lead-only procedures in the overlay,
+        # shared rules in the protocol.
+        for lead_only in ("Cross-model review", "Post-review prune", "Throughput checkpoint"):
+            self.assertNotIn(lead_only, protocol)
+        for shared in ("Run writable Peers in parallel", "A review Peer starts with zero context",
+                       "Match evidence to the promised outcome", "repeatedly polling"):
+            self.assertNotIn(shared, lead)
         self.assertIn("Reproduce first.", (ROOM / "playbooks" / "bug-fix.md").read_text())
         self.assertIn("`<project>/.scratch/RESUME.md`", (ROOM / "playbooks" / "pause-and-resume.md").read_text())
         advisor = (ROOM / "overlays" / "advisor.config.toml").read_text()

@@ -87,7 +87,7 @@ When architecture or an exact candidate carries material uncertainty, Lead may
 request a fresh read-only Peer review of the stable candidate or snapshot. The
 review uses the flexible Peer profile and a bounded question; no dedicated
 review role or mandatory form is required. A non-trivial or risky candidate
-or spec also gets the cross-model review (see Engineering skills).
+or spec also gets the Lead's cross-model review.
 
 A review Peer starts with zero context. Its brief names the candidate or
 document, the bounded question, and the paths it may read. It carries no Lead
@@ -137,17 +137,11 @@ contract disagree, this contract wins.
   (with `grilling` and `domain-modeling`), `to-spec`, `to-tickets`,
   `wayfinder`, `triage`, `improve-codebase-architecture`, `ask-matt`,
   `implement-spec` (orchestration, see below), and `retro` after a session.
-- Spec review. After `to-spec` and before `to-tickets`, Lead sends the spec to
-  fresh read-only Peers, one lens each: zoom-out (is the design larger than
-  the problem; does the codebase, a dependency, or the platform already
-  provide it), naive reader (can someone with no project history follow it;
-  which terms, assumptions, or background are missing), and codebase auditor
-  (do the named paths, functions, signatures, and APIs exist as described).
-  Lead may drop a lens that cannot apply, such as the auditor for a spec that
-  names no existing code, and records why. Lead marks each finding fix or
-  contest in the spec or tracker, citing evidence for a contest, updates the
-  spec, and writes tickets only from the updated spec. Human may waive the
-  step for a small spec.
+- Lead procedures. Spec review (after `to-spec`, before `to-tickets`),
+  cross-model review, post-review prune, playbook routing, and the
+  throughput checkpoint are defined in the Lead role
+  (`~/.config/codex-room/overlays/lead.config.toml`). Lead follows them;
+  Peers and the Advisor only receive their briefs.
 - Build belongs to Peers: `implement`, `tdd`, `diagnosing-bugs`, `prototype`,
   `wizard`, and the reading part of `research`. Merge and rebase conflicts are
   ordinary Peer work (no dedicated skill).
@@ -181,22 +175,6 @@ contract disagree, this contract wins.
 - `code-review`. Lead runs it by dispatching two fresh read-only Peers against
   the same fixed point, one for the Standards axis and one for the Spec axis,
   then reads both reports and explicitly accepts or rejects the candidate.
-- Cross-model review. For a non-trivial or risky candidate or spec, Lead
-  sends one identical zero-context brief (candidate, intent from the ticket
-  or spec, bounded question, readable paths) to a fresh read-only MiniMax
-  Peer and a fresh Advisor; a Kiro Peer joins as a third model only when
-  Human asks. Lead merges every review report, notes which model raised each
-  finding, and puts each in Act on, Consider, Noted, or Dismissed with a
-  one-line reason. A finding two models raised independently is the
-  strongest signal. The buckets go in the tracker with the acceptance
-  decision; no ACCEPT while an Act on finding is open.
-- Playbooks. Lead matches each task to a route: Feature uses the align,
-  plan, and build loop here; bug fix, investigation, refactoring, and pause
-  or resume use the playbooks in `~/.config/codex-room/playbooks/`. Lead
-  copies the matched playbook's steps into its task list and marks any
-  skipped step `skip: <reason>`. Before writable dispatch, Lead writes the
-  throughput checkpoint (blocking first steps, independent workstreams,
-  shared mutable state, smallest safe decomposition) in the tracker.
 - Ponytail. Every Peer carries `PONYTAIL.md`: before writing code it reuses
   what the codebase, standard library, platform, or installed dependencies
   already provide, writes the smallest complete change, never cuts validation,
@@ -207,13 +185,6 @@ contract disagree, this contract wins.
   candidate, Lead adds a fresh read-only Peer that runs it beside the Standards
   and Spec Peers (bugs outside the diff, security, real load, untested risky
   logic, what to cut). Its findings are evidence; Lead still decides.
-- Post-review prune. Fixes for review findings tend to add guards, options,
-  and sections the finding did not need. When fixes change a spec or
-  candidate beyond a few lines, Lead sends the fix delta (diff against the
-  reviewed point) to one more fresh read-only Peer before acceptance: the
-  zoom-out lens for a spec, `ponytail-review` for code. It asks what the
-  fixes added that their findings did not require, and does not reopen
-  decisions Lead already accepted.
 - `ponytail-audit` (whole repo, ranked) and `ponytail-debt` (ledger of
   `ponytail:` shortcuts) are read-only Peer tasks run at Human's request or
   before planning a cleanup; Lead turns accepted findings into tracker tickets.
