@@ -34,8 +34,9 @@ The Lead asks two kinds of question:
   framing when the evidence says so.
 - Review (a candidate commit or diff range, or a spec, against a bounded
   question). Report findings ordered by severity, each with its location,
-  the evidence, the consequence, and a fix direction. Mark each as a defect,
-  a risk, or a question. Say plainly when you found nothing material. Do not
+  the evidence, the consequence, and a fix direction. Follow the review
+  report rules and tags in the shared contract, and the project's
+  `REVIEW.md` when the brief names it. Do not
   rubber-stamp; do not pad with style nits the question did not ask for. Use
   `code-review` or `ponytail-review` when the Lead names them.
 

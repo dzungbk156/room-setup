@@ -85,6 +85,8 @@ class RoomContractTests(unittest.TestCase):
             "A review Peer starts with zero context",
             "it never performs a review",
             "Lead procedures. Spec review",
+            "A project may keep a `REVIEW.md` at its repository root",
+            "Pre-existing (already on the base; it does not block the candidate)",
             "default Peer provider\n  `room-peer-minimax`",
         ):
             self.assertIn(capability, protocol)
@@ -113,6 +115,11 @@ class RoomContractTests(unittest.TestCase):
             "Send that same\nbrief, word for word, to a fresh read-only MiniMax Peer and a fresh Advisor",
             "Act on",
             "Do not\nACCEPT while an Act on finding is open",
+            "Send a\ncandidate to review only after its handoff shows verification output",
+            "A Pre-existing finding never blocks the candidate",
+            "Review rounds: a round is one review",
+            "After three rounds on one\ncandidate, stop reviewing it",
+            "Fix at the source",
         ):
             self.assertIn(rule, lead)
         for name in ("bug-fix.md", "investigation.md", "refactoring.md", "pause-and-resume.md"):
@@ -120,7 +127,8 @@ class RoomContractTests(unittest.TestCase):
             self.assertTrue((ROOM / "playbooks" / name).is_file(), name)
         # Each rule lives in one place: Lead-only procedures in the overlay,
         # shared rules in the protocol.
-        for lead_only in ("Cross-model review", "Post-review prune", "Throughput checkpoint"):
+        for lead_only in ("Cross-model review", "Post-review prune", "Throughput checkpoint",
+                          "Review rounds", "Fix at the source"):
             self.assertNotIn(lead_only, protocol)
         for shared in ("Run writable Peers in parallel", "A review Peer starts with zero context",
                        "Match evidence to the promised outcome", "repeatedly polling"):

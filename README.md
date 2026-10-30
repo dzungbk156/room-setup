@@ -57,7 +57,10 @@ throughput checkpoint (blocking steps, independent workstreams, shared
 state, decomposition) in the tracker. A non-trivial or risky candidate gets
 a cross-model review: the same brief goes to a MiniMax Peer and the Advisor,
 and the Lead sorts findings into Act on / Consider / Noted / Dismissed before
-it accepts. A paused Lead leaves `.scratch/RESUME.md`, which `room-digest`
+it accepts. Reviewers follow the project's `REVIEW.md` when it has one
+(what failure looks like, paths that always get full review, paths to skip,
+a nit cap) and tag each finding Important, Nit, or Pre-existing. Review stops
+after three rounds on one candidate; later rounds see only the fix delta. A paused Lead leaves `.scratch/RESUME.md`, which `room-digest`
 prints at the next session start.
 
 ## Prerequisites

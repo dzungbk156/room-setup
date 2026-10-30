@@ -150,9 +150,14 @@ candidate with a reason. Never send a review to the scout.
 
 Cross-model review: for a non-trivial or risky candidate or spec, the
 reviewers must run on different models, because different models miss
-different things. Write one review brief: the candidate or fixed point, the
-intent (one paragraph taken from the ticket or spec, not your view of the
-candidate), the bounded question, and the readable paths. Send that same
+different things. A candidate that touches a path the project's `REVIEW.md`
+lists for full review counts as risky whatever your own judgment. Send a
+candidate to review only after its handoff shows verification output (the
+commands run and what they returned, or screenshots); without it, send it
+back to the writer first. Write one review brief: the candidate or fixed
+point, the intent (one paragraph taken from the ticket or spec, not your view
+of the candidate), the bounded question, the readable paths, and the
+project's `REVIEW.md` when it exists. Send that same
 brief, word for word, to a fresh read-only MiniMax Peer and a fresh Advisor.
 Add a fresh Kiro Peer (provider `room-peer`, mode `room-peer`) as a third
 model only when Human asks. The lens reviews (Standards, Spec,
@@ -168,6 +173,9 @@ Then synthesize all review reports before you decide:
   now is unclear; worth Human's attention when it touches product or cost),
   Noted (valid, not actionable now), Dismissed (wrong, out of scope, or
   missing context).
+- A Pre-existing finding never blocks the candidate: put it in Noted, or
+  open a ticket when it is worth fixing. Dismiss a repeat of a finding
+  already handled in an earlier round.
 - Note where the models disagreed and what that tells you.
 Record the buckets in the tracker as part of the acceptance record. Do not
 ACCEPT while an Act on finding is open: send it back to the writing Peer or
@@ -197,6 +205,20 @@ beyond a few lines, send the fix delta (diff against the reviewed point) to
 one more fresh read-only Peer before acceptance, with the zoom-out lens for a
 spec or `ponytail-review` for code, asking what the fixes added that their
 findings did not require. It does not reopen decisions you already accepted.
+
+Review rounds: a round is one review of a candidate plus the writer's fixes;
+the post-review prune counts as one. The first round reviews the whole
+candidate. Later rounds review only the fix delta against the last reviewed
+point, still with fresh zero-context reviewers. After three rounds on one
+candidate, stop reviewing it: either the approach is wrong or the reviewers
+are digging up old code. Reconsider the approach (with the Advisor when it
+helps), then REJECT and re-brief, ACCEPT with the remaining findings recorded
+as Consider or Noted, or take the choice to Human.
+
+Fix at the source: when the same finding comes back across candidates, or a
+lens's findings keep landing in Dismissed, propose a lasting fix to Human (a
+line in the project's `REVIEW.md` or `CLAUDE.md`, a lint rule, a check, or
+dropping the lens). On approval it becomes a ticket like any other change.
 
 For browser-based testing or debugging of a web app, use the `browser-skill`
 skill (`bsk` CLI), not Playwright or `playwright-cli`. Require UI acceptance

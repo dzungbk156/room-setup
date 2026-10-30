@@ -96,6 +96,16 @@ bias the reviewer toward what Lead already believes. The reusable read-only
 scout accumulates context, so it never performs a review: each review gets a
 fresh Peer, archived when its report is accepted.
 
+A project may keep a `REVIEW.md` at its repository root, owned by Human: what
+failure looks like in that project, paths that always get the full review,
+paths to skip, and a cap on nits. Every review brief names it when it exists,
+and every reviewer follows it. A review report starts with the number of
+findings and says plainly when there is nothing to fix. Each finding cites a
+file and line as evidence, not a guess from a name, and carries one tag:
+Important (the candidate introduced it and it needs a fix), Nit, or
+Pre-existing (already on the base; it does not block the candidate). Report
+a class of bug once with every instance, not one line at a time.
+
 ## Acceptance and waiting
 
 Every actionable Peer response closes a loop with its original Lead brief.
