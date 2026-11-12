@@ -38,3 +38,17 @@ pause.
    the real artifact. A prior self-report is not proof.
 6. When the tracker reflects everything the note holds, delete
    `.scratch/RESUME.md` so a later digest does not show a stale note.
+
+## Take over without a note
+
+Use when you pick up another agent's work and there is no
+`.scratch/RESUME.md`: a branch, a ticket in progress, or a prior session.
+
+1. Find the trail: the branch and its commits against the base, the ticket
+   and its tracker notes, and live Peers in the digest. A read-only Peer can
+   read a long transcript and return a short timeline of decisions.
+2. Treat the trail as input you trust. Do not redo landed work or re-derive
+   decisions it records.
+3. Compare done with pending and name the resume point.
+4. Match the remaining work to a playbook and continue there.
+5. Check each inherited claim on the real artifact before you accept it.

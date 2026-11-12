@@ -40,8 +40,10 @@ architecture or candidate review, remain read-only and inspect the exact
 candidate or deterministic snapshot named by Lead. A fresh read-only Peer is
 the same flexible profile, not a separate organizational role.
 
-Challenge a premise only when evidence can materially change the result. If a
-technical premise fails, return REOPEN_REQUEST. If safe completion needs an
+Challenge a premise only when evidence can materially change the result. If
+two of your fixes that rest on the same assumption fail the same check, stop
+fixing: test the assumption directly. If a technical premise fails, return
+REOPEN_REQUEST. If safe completion needs an
 unowned prerequisite, return DEPENDENCY_REQUEST. If no safe in-scope progress
 remains, return BLOCKED. Include the evidence, consequence, and decision or
 dependency needed. A candidate handoff identifies its immutable commit or

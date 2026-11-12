@@ -103,8 +103,11 @@ and every reviewer follows it. A review report starts with the number of
 findings and says plainly when there is nothing to fix. Each finding cites a
 file and line as evidence, not a guess from a name, and carries one tag:
 Important (the candidate introduced it and it needs a fix), Nit, or
-Pre-existing (already on the base; it does not block the candidate). Report
-a class of bug once with every instance, not one line at a time.
+Pre-existing (already on the base; it does not block the candidate). An
+Important finding about behavior carries its proof: the command or test the
+reviewer ran and its output. If the reviewer could not run it, the finding
+says unproven. Report a class of bug once with every instance, not one line
+at a time.
 
 ## Acceptance and waiting
 
@@ -198,6 +201,15 @@ contract disagree, this contract wins.
 - `ponytail-audit` (whole repo, ranked) and `ponytail-debt` (ledger of
   `ponytail:` shortcuts) are read-only Peer tasks run at Human's request or
   before planning a cleanup; Lead turns accepted findings into tracker tickets.
+- pstack skills (`how`, `why`, `pstack-teach`, `unslop`, from
+  backnotprop/pstack) are read-only Peer tasks. Each skill says to spawn
+  subagents. A Peer has no subagent tool, so it runs each role itself, one
+  after another, and keeps the skill's output format. `how` explains how a
+  subsystem works. `why` explains why code has its shape, from history and
+  connected sources, with each claim labeled. `pstack-teach` runs both and
+  writes one plain explanation for Human. `unslop` removes AI patterns from
+  prose a Peer writes for Human, when the brief asks for it. The Peer ignores
+  the skills' model names and `poteto-mode` references.
 - REA (reverse engineering). A Kiro Peer (provider `room-peer`) in mode
   `room-peer-re` carries the REA MCP
   tools and `reverse-engineer-anything` skill for shipped targets without

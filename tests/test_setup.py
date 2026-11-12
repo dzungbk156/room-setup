@@ -120,9 +120,15 @@ class RoomContractTests(unittest.TestCase):
             "Review rounds: a round is one review",
             "After three rounds on one\ncandidate, stop reviewing it",
             "Fix at the source",
+            "An Act on finding needs proof",
+            "Explaining to Human: Human talks only to you",
+            "Do not run these three skills\nyourself",
+            "Attack the premise",
+            "Blast radius",
         ):
             self.assertIn(rule, lead)
-        for name in ("bug-fix.md", "investigation.md", "refactoring.md", "pause-and-resume.md"):
+        for name in ("bug-fix.md", "investigation.md", "refactoring.md", "pause-and-resume.md",
+                     "perf-issue.md", "prototype.md"):
             self.assertIn(f"`{name}`", lead)
             self.assertTrue((ROOM / "playbooks" / name).is_file(), name)
         # Each rule lives in one place: Lead-only procedures in the overlay,
@@ -194,7 +200,8 @@ class InstallSlpTests(unittest.TestCase):
         for rel in (".local/bin/codex-room", ".local/bin/codex-room-sync", ".local/bin/claude-room",
                     ".local/bin/room-digest"):
             self.assertTrue(os.access(self.home / rel, os.X_OK), rel)
-        for name in ("bug-fix.md", "investigation.md", "refactoring.md", "pause-and-resume.md"):
+        for name in ("bug-fix.md", "investigation.md", "refactoring.md", "pause-and-resume.md",
+                     "perf-issue.md", "prototype.md"):
             self.assertTrue((self.home / ".config/codex-room/playbooks" / name).is_file(), name)
         peer = json.loads((self.home / ".kiro/agents/room-peer.json").read_text())
         self.assertEqual(peer["prompt"], f"file://{self.home}/.config/codex-room/roles/peer.md")

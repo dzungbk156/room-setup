@@ -51,7 +51,7 @@ contract `home/.config/codex-room/workflow/WORKSPACE_PROTOCOL.md`.
 
 The Lead matches each task to a route. Features use the
 grill → spec → tickets → build loop; bug fixes, investigations, refactors,
-and pause/resume use short playbooks in `home/.config/codex-room/playbooks/`,
+perf issues, prototypes, and pause/resume/takeover use short playbooks in `home/.config/codex-room/playbooks/`,
 read only when matched. Before writable dispatch the Lead writes a
 throughput checkpoint (blocking steps, independent workstreams, shared
 state, decomposition) in the tracker. A non-trivial or risky candidate gets
@@ -59,7 +59,8 @@ a cross-model review: the same brief goes to a MiniMax Peer and the Advisor,
 and the Lead sorts findings into Act on / Consider / Noted / Dismissed before
 it accepts. Reviewers follow the project's `REVIEW.md` when it has one
 (what failure looks like, paths that always get full review, paths to skip,
-a nit cap) and tag each finding Important, Nit, or Pre-existing. Review stops
+a nit cap) and tag each finding Important, Nit, or Pre-existing. An Act on finding needs a
+run that proves it (a command, test, or repro); until then it is Consider. Review stops
 after three rounds on one candidate; later rounds see only the fix delta. A paused Lead leaves `.scratch/RESUME.md`, which `room-digest`
 prints at the next session start.
 
@@ -86,6 +87,11 @@ prints at the next session start.
     (`grill-with-docs`, `to-spec`, `to-tickets`, `implement-spec`, ...),
     `humanizer`, `browser-skill`, and the Paseo skills, in `~/.claude/skills`
     or `~/.agents/skills`.
+  - Lead: `bro` from [backnotprop/pstack](https://github.com/backnotprop/pstack).
+  - MiniMax Peers: `how`, `why`, `teach` (installed as `pstack-teach`, so it
+    does not replace another `teach`), and `unslop` from pstack, in
+    `~/.agents/skills`. The Lead briefs a Peer to run them when Human asks how
+    or why something works; Human never talks to Peers directly.
   - Peers: `~/.kiro/skills/browser-skill/SKILL.md`; the REA Peer also needs
     `~/.claude/skills/reverse-engineer-anything/SKILL.md` and Node from
     `~/.local/opt/node24/bin` or Homebrew for `npx rea-agents`.

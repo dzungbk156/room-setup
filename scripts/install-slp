@@ -39,6 +39,8 @@ FILES = [
     (".config/codex-room/playbooks/investigation.md", None, False, False),
     (".config/codex-room/playbooks/refactoring.md", None, False, False),
     (".config/codex-room/playbooks/pause-and-resume.md", None, False, False),
+    (".config/codex-room/playbooks/perf-issue.md", None, False, False),
+    (".config/codex-room/playbooks/prototype.md", None, False, False),
     (".local/bin/codex-room", None, False, True),
     (".local/bin/codex-room-sync", None, False, True),
     (".local/bin/claude-room", None, False, True),

@@ -13,9 +13,12 @@ changes.
 3. Send the question to the read-only scout. Split independent
    sub-questions across fresh read-only Peers, one each. Ask every Peer to
    label each claim: verified (with `path:line`, a commit, or command
-   output), inferred (with the reasoning), or guess.
-4. For "why was it built this way", the Peer reads history: `git log`,
-   `git blame`, the commits and tickets that introduced it, ADRs.
+   output), inferred (with the reasoning), or guess. For "how does X work",
+   ask the Peer to use `how`.
+4. For "why was it built this way", the Peer uses `why`: `git log`,
+   `git blame`, the commits and tickets that introduced it, ADRs, and the
+   connected sources you name. A full `why` sweep takes minutes; name the
+   sources when only some matter.
 5. When the answer depends on a fact you can observe by running something
    (behavior, timing, output, performance), a Peer runs it or builds a
    throwaway check outside the repository. Do not ask Human a question that
