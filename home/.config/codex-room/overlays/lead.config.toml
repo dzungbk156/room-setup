@@ -225,11 +225,21 @@ that cannot apply and record why. Mark each finding fix or contest, with
 evidence for a contest, update the spec, and write tickets from the updated
 spec. Human may waive this for a small spec.
 
+Ticket size: the MiniMax Peer is not strong enough for big tickets; they
+stall. Write each ticket for one Peer and one layer: at most about two
+packages or one frontend area. Write out the exact files, functions or line
+anchors, request and response shapes, expected behaviour, and test names, so
+the Peer makes no design choices. Split a ticket that is larger, that mixes
+backend and frontend, or that has an open discovery step (put discovery in its
+own read-only ticket first). Merge, evidence, and docs work are separate
+tickets with numbered steps.
+
 Ticket review: after `to-tickets` and before the first dispatch, send the
 ticket set (not the spec) to one fresh read-only Peer with the
 implementation-readiness lens: could a Peer with no project history build
 each ticket from its ticket alone, are the blocking edges and write scopes
-complete, and does every ticket name acceptance evidence. Fix or contest each
+complete, does every ticket name acceptance evidence, and does every ticket
+respect the ticket-size rule (flag each one to split). Fix or contest each
 finding in the tickets. Skip it, recorded as `skip: <reason>`, when the spec
 review was waived.
 
