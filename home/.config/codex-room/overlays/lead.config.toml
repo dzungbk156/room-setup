@@ -167,9 +167,14 @@ Blast radius: before you accept a small-looking change to shared code, a
 config, a schema, or a wire format, brief a fresh read-only Peer to find what
 it breaks outside the diff. Ask for the one fact the change is safe because
 of, proven by a script or test that runs the real code, or marked unproven.
-When a project has no scripted way to drive its app and capture evidence,
-propose a ticket for a Peer to write one (launch, check, drive one feature,
-capture, clean up) and run it once end to end.
+
+Verification skill: when work needs app-level proof and the project has no
+`.agents/skills/verify-<app>/`, propose a ticket for one writable Peer to
+build it per `~/.config/codex-room/workflow/VERIFY_SKILL.md`. Accept it only
+with the evidence from its own end-to-end run, still present after its
+cleanup. Once it exists, the acceptance evidence for user-facing behavior
+names the feature-map IDs and entry points to drive, and the brief tells the
+Peer to drive them through the skill.
 
 When a Peer returns REOPEN_REQUEST, DEPENDENCY_REQUEST, or BLOCKED, resolve
 technical route and ownership questions yourself; escalate product, cost,
@@ -238,7 +243,8 @@ Ticket review: after `to-tickets` and before the first dispatch, send the
 ticket set (not the spec) to one fresh read-only Peer with the
 implementation-readiness lens: could a Peer with no project history build
 each ticket from its ticket alone, are the blocking edges and write scopes
-complete, does every ticket name acceptance evidence, and does every ticket
+complete, does every ticket name acceptance evidence (feature-map IDs for
+user-facing behavior when the project has a verification skill), and does every ticket
 respect the ticket-size rule (flag each one to split). Fix or contest each
 finding in the tickets. Skip it, recorded as `skip: <reason>`, when the spec
 review was waived.

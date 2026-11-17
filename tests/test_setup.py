@@ -140,6 +140,15 @@ class RoomContractTests(unittest.TestCase):
                        "Match evidence to the promised outcome", "repeatedly polling"):
             self.assertNotIn(shared, lead)
         self.assertIn("Reproduce first.", (ROOM / "playbooks" / "bug-fix.md").read_text())
+        verify = (ROOM / "workflow" / "VERIFY_SKILL.md").read_text()
+        for rule in ("Adapted from pstack", "`<project>/.agents/skills/verify-<app>/`", "- Doctor:",
+                     "## 4. Prove the skill before handoff", "never Playwright",
+                     "Never weaken a journey to make it pass."):
+            self.assertIn(rule, verify)
+        self.assertIn("Verification skill: when work needs app-level proof", lead)
+        for rule in ("Proof drives the real user path", "An entry point not driven is not",
+                     "`~/.config/codex-room/workflow/VERIFY_SKILL.md`"):
+            self.assertIn(rule, protocol)
         self.assertIn("`<project>/.scratch/RESUME.md`", (ROOM / "playbooks" / "pause-and-resume.md").read_text())
         advisor = (ROOM / "overlays" / "advisor.config.toml").read_text()
         for rule in ("Room role: Advisor.", "Read only.", "do not address Human",
@@ -203,6 +212,9 @@ class InstallSlpTests(unittest.TestCase):
         for name in ("bug-fix.md", "investigation.md", "refactoring.md", "pause-and-resume.md",
                      "perf-issue.md", "prototype.md"):
             self.assertTrue((self.home / ".config/codex-room/playbooks" / name).is_file(), name)
+        self.assertTrue((self.home / ".config/codex-room/workflow/VERIFY_SKILL.md").is_file())
+        self.assertIn("Proof drives the real user path",
+                      (self.home / ".config/codex-room/opencode-peer/AGENTS.md").read_text())
         peer = json.loads((self.home / ".kiro/agents/room-peer.json").read_text())
         self.assertEqual(peer["prompt"], f"file://{self.home}/.config/codex-room/roles/peer.md")
         config = json.loads((self.home / ".paseo/config.json").read_text())

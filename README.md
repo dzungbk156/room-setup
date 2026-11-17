@@ -61,7 +61,13 @@ it accepts. Reviewers follow the project's `REVIEW.md` when it has one
 (what failure looks like, paths that always get full review, paths to skip,
 a nit cap) and tag each finding Important, Nit, or Pre-existing. An Act on finding needs a
 run that proves it (a command, test, or repro); until then it is Consider. Review stops
-after three rounds on one candidate; later rounds see only the fix delta. A paused Lead leaves `.scratch/RESUME.md`, which `room-digest`
+after three rounds on one candidate; later rounds see only the fix delta.
+For app-level proof, a Peer builds a project verification skill once
+(`.agents/skills/verify-<app>/`: launch, health check, drive, evidence,
+cleanup, and a feature map) from `workflow/VERIFY_SKILL.md`, adapted from
+pstack's `create-verification-skill`. Later tickets name the feature-map IDs
+to drive, and handoffs cite them with the evidence path.
+A paused Lead leaves `.scratch/RESUME.md`, which `room-digest`
 prints at the next session start.
 
 ## Prerequisites
@@ -110,7 +116,7 @@ paseo restart                  # or quit and reopen the Paseo app
 `install-slp` writes:
 
 - `~/.config/codex-room/` (Lead overlay, Peer role, workspace protocol, Lead playbooks,
-  `PONYTAIL.md`, OpenCode Peer config)
+  `PONYTAIL.md`, `VERIFY_SKILL.md`, OpenCode Peer config)
 - `~/.local/bin/codex-room`, `codex-room-sync`, `claude-room`, `room-digest`
 - `~/.kiro/agents/room-peer.json`, `room-peer-re.json`
 - the room providers and agent profiles in `~/.paseo/config.json`, merged into

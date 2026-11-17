@@ -32,6 +32,7 @@ FILES = [
     (".config/codex-room/model-instructions.md", None, False, False),
     (".config/codex-room/workflow/WORKSPACE_PROTOCOL.md", None, False, False),
     (".config/codex-room/workflow/PONYTAIL.md", None, False, False),
+    (".config/codex-room/workflow/VERIFY_SKILL.md", None, False, False),
     (".config/codex-room/overlays/lead.config.toml", None, False, False),
     (".config/codex-room/overlays/advisor.config.toml", None, False, False),
     (".config/codex-room/roles/peer.md", None, False, False),

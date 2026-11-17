@@ -72,6 +72,23 @@ untested scope, failed checks, and unknowns. Match proof to the promised
 outcome: passing tests or valid data alone do not establish usable UI, playback
 quality, or save/reopen behavior.
 
+Proof drives the real user path, not internal setters or test-only
+endpoints. It captures the action and the state it produced, and checks side
+effects (files, stored rows, sent messages) through a second, read-only view.
+Observe what a dry-run or test mode really skips; do not trust its name. Drive
+only instances this run started, and recheck their health after any
+surprise. When a check fails, suspect the observation method before the
+system.
+
+When the project has a verification skill (`.agents/skills/verify-<app>/`),
+app-level proof runs through it. The handoff names the feature-map IDs and
+entry points driven and the evidence path. An entry point not driven is not
+verified through another one. A journey that fails for a missing precondition
+is a failure with its reason, never a weaker journey. A candidate that adds or
+changes a user-facing feature updates that feature's map file. If the app no
+longer does what the map says, report whether the map or the app is wrong;
+do not edit the map to match broken behavior.
+
 A handoff states what is usable, how to try it, remaining limits, and usable
 downstream inputs. Permission to proceed with a limitation does not turn an
 unmet criterion into a pass.
@@ -210,6 +227,12 @@ contract disagree, this contract wins.
   writes one plain explanation for Human. `unslop` removes AI patterns from
   prose a Peer writes for Human, when the brief asks for it. The Peer ignores
   the skills' model names and `poteto-mode` references.
+- Verification skill. A project's `verify-<app>` skill (Launch, Doctor,
+  Drive, Evidence, Cleanup, and a `features/` map) is built by one writable
+  Peer that follows `~/.config/codex-room/workflow/VERIFY_SKILL.md`, adapted
+  from pstack's `create-verification-skill`. The Peer proves it end to end
+  once before handoff. Later Peers drive the app through it when a brief asks
+  for app-level proof.
 - REA (reverse engineering). A Kiro Peer (provider `room-peer`) in mode
   `room-peer-re` carries the REA MCP
   tools and `reverse-engineer-anything` skill for shipped targets without
