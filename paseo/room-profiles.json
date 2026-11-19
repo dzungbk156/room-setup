@@ -54,5 +54,23 @@
     "model": "minimax-coding-plan/MiniMax-M3.1-Flash",
     "notes": "Default room Peer on OpenCode + MiniMax M3.1 Flash. Leads use it for all Peer work; Kiro (room-peer) only when Human asks for it, or for REA.",
     "icon": "opencode"
+  },
+  {
+    "id": "room-lead-grok",
+    "name": "Lead (Grok)",
+    "icon": "grok",
+    "provider": "room-lead-grok",
+    "model": "grok-4.7",
+    "thinkingOptionId": "medium",
+    "notes": "Room Lead on Grok Build grok-4.7 (testing). Consults the Grok Advisor (room-advisor-grok). One Lead per project."
+  },
+  {
+    "id": "room-advisor-grok",
+    "name": "Advisor (Grok)",
+    "icon": "grok",
+    "provider": "room-advisor-grok",
+    "model": "grok-4.7",
+    "thinkingOptionId": "high",
+    "notes": "Room Advisor on Grok Build grok-4.7 (testing). Second opinion and reviewer for the Grok Lead; reads only, decides nothing. Created only by the Lead."
   }
 ]

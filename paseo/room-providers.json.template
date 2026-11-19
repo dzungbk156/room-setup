@@ -146,5 +146,73 @@
     "paseoTools": {
       "enabled": false
     }
+  },
+  "room-lead-grok": {
+    "extends": "acp",
+    "label": "Room Lead (Grok)",
+    "description": "Lead seat: Grok Build (grok-4.7) over ACP with room orchestration tools",
+    "command": [
+      "@@HOME@@/.local/bin/grok-room",
+      "lead"
+    ],
+    "models": [
+      {
+        "id": "grok-4.7",
+        "label": "Grok 4.7",
+        "isDefault": true,
+        "thinkingOptions": [
+          {
+            "id": "medium",
+            "label": "Medium",
+            "isDefault": true
+          },
+          {
+            "id": "high",
+            "label": "High"
+          },
+          {
+            "id": "xhigh",
+            "label": "Extra high"
+          }
+        ]
+      }
+    ],
+    "paseoTools": {
+      "enabled": true
+    }
+  },
+  "room-advisor-grok": {
+    "extends": "acp",
+    "label": "Room Advisor (Grok)",
+    "description": "Advisor seat: Grok Build (grok-4.7) second opinion and reviewer for the Lead; reads only, no orchestration tools",
+    "command": [
+      "@@HOME@@/.local/bin/grok-room",
+      "advisor"
+    ],
+    "models": [
+      {
+        "id": "grok-4.7",
+        "label": "Grok 4.7",
+        "isDefault": true,
+        "thinkingOptions": [
+          {
+            "id": "medium",
+            "label": "Medium"
+          },
+          {
+            "id": "high",
+            "label": "High",
+            "isDefault": true
+          },
+          {
+            "id": "xhigh",
+            "label": "Extra high"
+          }
+        ]
+      }
+    ],
+    "paseoTools": {
+      "enabled": false
+    }
   }
 }

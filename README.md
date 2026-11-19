@@ -13,6 +13,8 @@ Paseo
   ├─ room-lead-claude   Claude Code (claude-opus-5-5) via claude-room lead
   ├─ room-lead          Codex (gpt-6-astra) via codex-room lead
   ├─ room-advisor       Codex (gpt-6.1-sol) via codex-room advisor
+  ├─ room-lead-grok     Grok Build (grok-4.7) via grok-room lead (trial)
+  ├─ room-advisor-grok  Grok Build (grok-4.7) via grok-room advisor (trial)
   ├─ room-peer-minimax  OpenCode (MiniMax M3.1 Flash), default Peer
   └─ room-peer          Kiro CLI (claude-opus-4.5), modes room-peer / room-peer-re
 ```
@@ -28,6 +30,8 @@ any custom providers already in your config.
 | Lead (Opus) | `room-lead-claude` | `claude-opus-5-5` | The Lead Human works with: grilling, specs, tickets, build, acceptance |
 | Lead (Astra) | `room-lead` | `gpt-6-astra` | Codex Lead, when Human starts one instead |
 | Advisor (Sol 6.1) | `room-advisor` | `gpt-6.1-sol` | Second opinions and reviews for the Lead; reads only |
+| Lead (Grok) | `room-lead-grok` | `grok-4.7` | Trial Lead on Grok Build; consults the Grok Advisor |
+| Advisor (Grok) | `room-advisor-grok` | `grok-4.7` | Trial Advisor for the Grok Lead; reads only |
 | Peer (MiniMax) | `room-peer-minimax` | MiniMax M3.1 Flash | Every Peer by default |
 | Peer | `room-peer` | `claude-opus-4.5` | Only when Human asks |
 | Peer (REA) | `room-peer` (mode `room-peer-re`) | `claude-opus-4.5` | Reverse engineering only |
@@ -83,6 +87,10 @@ prints at the next session start.
     writing anything if one is missing; an empty `AGENTS.md` or directory is fine.
   - `claude` (Claude Code) logged in to a Claude subscription. `claude-room`
     unsets `ANTHROPIC_API_KEY` / `ANTHROPIC_BASE_URL` on purpose.
+  - Optional, for the Grok seats: `grok` (Grok Build) logged in (`grok login`).
+    `grok-room` runs `grok agent stdio` over ACP with the role text as an
+    agent profile, built-in subagents off. The Grok Lead does not get the
+    Lead skill allowlist; it sees whatever skills Grok discovers.
   - `opencode` logged in to the MiniMax coding plan, for the default MiniMax Peer.
   - `kiro-cli` on `PATH` with access to `claude-opus-4.5`, for the Kiro and REA
     Peers. The installer records that path in the Paseo provider; re-run it if
@@ -117,7 +125,7 @@ paseo restart                  # or quit and reopen the Paseo app
 
 - `~/.config/codex-room/` (Lead overlay, Peer role, workspace protocol, Lead playbooks,
   `PONYTAIL.md`, `VERIFY_SKILL.md`, OpenCode Peer config)
-- `~/.local/bin/codex-room`, `codex-room-sync`, `claude-room`, `room-digest`
+- `~/.local/bin/codex-room`, `codex-room-sync`, `claude-room`, `grok-room`, `room-digest`
 - `~/.kiro/agents/room-peer.json`, `room-peer-re.json`
 - the room providers and agent profiles in `~/.paseo/config.json`, merged into
   your existing config, `paseoTools.enabled = false` on non-room providers, and

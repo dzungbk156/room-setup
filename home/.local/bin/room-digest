@@ -154,7 +154,7 @@ def room_agents(project: Path, agents: dict[str, dict]) -> tuple[list[str], list
         line = f"{short(record['id'])} {provider} {state(record)} \"{record.get('title') or ''}\""
         if provider.startswith("room-lead"):
             leads.append(line)
-        elif provider == "room-advisor":
+        elif provider.startswith("room-advisor"):
             advisors.append(line)
         elif provider.startswith("room-peer"):
             tags = labels(record)

@@ -46,7 +46,8 @@ class RoomContractTests(unittest.TestCase):
     def test_paseo_templates_give_orchestration_tools_only_to_leads(self) -> None:
         providers = json.loads(PROVIDERS.read_text())
         self.assertEqual(sorted(providers),
-                         ["room-advisor", "room-lead", "room-lead-claude", "room-peer", "room-peer-minimax"])
+                         ["room-advisor", "room-advisor-grok", "room-lead", "room-lead-claude", "room-lead-grok",
+                          "room-peer", "room-peer-minimax"])
         for name, spec in providers.items():
             self.assertEqual(spec["paseoTools"]["enabled"], name.startswith("room-lead"), name)
         profiles = json.loads(PROFILES.read_text())
@@ -436,6 +437,29 @@ class RoomDigestTests(unittest.TestCase):
         for rule in ("`room-digest <project>`", "`room.ticket`", "`room.scope`", "`room.branch`",
                      "adopt the listed Peers", "`notifyOnFinish`"):
             self.assertIn(rule, lead)
+
+    def test_grok_seats_launch_grok_with_the_role_profile(self) -> None:
+        root = Path(self.temporary.name).resolve()
+        fake = root / "fake-grok"
+        fake.write_text('#!/bin/sh\necho "subagents=$GROK_SUBAGENTS"\necho "$@"\n')
+        fake.chmod(0o755)
+        room = root / "room"
+        shutil.copytree(ROOM, room)
+        grok_room = HOME_MIRROR / ".local" / "bin" / "grok-room"
+        env = {**self.env, "CODEX_ROOM_CONFIG_HOME": str(room), "GROK_BIN": str(fake)}
+        for role, rule, seat in (("lead", "Room role: Lead.", "`room-advisor-grok`"),
+                                 ("advisor", "Room role: Advisor.", "provider `room-advisor-grok`")):
+            out = subprocess.run([str(grok_room), role], env=env, cwd=self.project,
+                                 capture_output=True, text=True, check=True).stdout.splitlines()
+            profile = room / "runtime" / f"grok-{role}" / f"room-{role}.md"
+            self.assertEqual(out, ["subagents=0",
+                                   f"agent --no-leader --always-approve --agent-profile {profile} stdio"])
+            text = profile.read_text()
+            self.assertTrue(text.startswith(f"---\nname: room-{role}\n"))
+            self.assertIn("prompt_mode: append", text)
+            self.assertIn(rule, text)
+            self.assertIn(seat, text)
+        self.assertEqual(subprocess.run([str(grok_room), "peer"], env=env, capture_output=True).returncode, 2)
 
 
 

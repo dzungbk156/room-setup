@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Install the multi-provider SLP room profiles.
 
-Lead -> Claude Code (claude-room) or Codex (codex-room), Advisor -> Codex
-(codex-room advisor), Peers -> Kiro CLI
+Lead -> Claude Code (claude-room), Codex (codex-room), or Grok Build (grok-room),
+Advisor -> Codex (codex-room advisor) or Grok Build (grok-room advisor), Peers -> Kiro CLI
 (room-peer agents) or OpenCode (MiniMax). Does not build or replace Paseo, and does
 not touch ~/.codex, ~/.claude, or Kiro auth. Every replaced file is backed up.
 
@@ -45,6 +45,7 @@ FILES = [
     (".local/bin/codex-room", None, False, True),
     (".local/bin/codex-room-sync", None, False, True),
     (".local/bin/claude-room", None, False, True),
+    (".local/bin/grok-room", None, False, True),
     (".local/bin/room-digest", None, False, True),
     (".kiro/agents/room-peer.json", None, True, False),
     (".kiro/agents/room-peer-re.json", None, True, False),

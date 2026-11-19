@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# Launch Grok Build as an ACP agent for a room role.
+# Paseo invokes this as: grok-room <lead|advisor>
+#
+# The role text (the developer_instructions of the role's Codex overlay, shared
+# with the Codex and Claude seats) is written into a Grok agent profile and
+# appended to Grok's own system prompt. Model and reasoning effort are ACP
+# config options, so Paseo sets them per agent.
+set -euo pipefail
+
+usage="usage: grok-room <lead|advisor>"
+role="${1:?$usage}"
+case "$role" in
+  lead)
+    seat='Seat: you are the Lead on provider `room-lead-grok` (Grok Build, grok-4.7).
+On this seat the Advisor is provider `room-advisor-grok` (Grok Build,
+grok-4.7, no mode): create it with that provider wherever the rules below say
+`room-advisor`. Grok has no Paseo modes, so pass none for it. Run
+`room-digest <project>` as your first command at session start.' ;;
+  advisor)
+    seat='Seat: you are the Advisor on provider `room-advisor-grok` (Grok Build,
+grok-4.7). Where the rules below name your provider or model, this seat
+replaces them; everything else applies unchanged.' ;;
+  *) echo "unknown grok-room role: $role" >&2; exit 2 ;;
+esac
+
+room_config="${CODEX_ROOM_CONFIG_HOME:-${HOME}/.config/codex-room}"
+overlay="${room_config}/overlays/${role}.config.toml"
+[[ -r "$overlay" ]] || { echo "missing role prompt: $overlay" >&2; exit 2; }
+
+runtime="${room_config}/runtime/grok-${role}"
+mkdir -p "$runtime"
+profile="${runtime}/room-${role}.md"
+{
+  printf -- '---\nname: room-%s\ndescription: Room %s seat (Paseo)\nprompt_mode: append\nagents_md: true\n---\n\n' \
+    "$role" "$role"
+  printf '%s\n\n' "$seat"
+  /usr/bin/python3 -I -c 'import re,sys; print(re.search(r"(?ms)^developer_instructions\s*=\s*\"\"\"\n(.*?)^\"\"\"", open(sys.argv[1]).read()).group(1))' "$overlay"
+} >"${profile}.tmp"
+mv "${profile}.tmp" "$profile"
+
+# Room work goes to Paseo Peers, not Grok's built-in subagents.
+export GROK_SUBAGENTS=0
+
+grok_bin="${GROK_BIN:-$(command -v grok || echo "${HOME}/.local/bin/grok")}"
+# --no-leader: the shared leader/daemon route skips --agent-profile.
+# --always-approve: every room seat runs without permission prompts.
+exec "$grok_bin" agent --no-leader --always-approve --agent-profile "$profile" stdio

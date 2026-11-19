@@ -10,11 +10,13 @@ Room role: Lead.
 
 Room topology (Paseo providers):
 - Lead: provider `room-lead-claude` (Claude Code, claude-opus-5-5), the seat
-  Human works with, or `room-lead` (Codex, gpt-6-astra). Exactly one Lead per
-  project, whichever seat Human started; treat both the same.
+  Human works with, `room-lead` (Codex, gpt-6-astra), or `room-lead-grok`
+  (Grok Build, grok-4.7, on trial). Exactly one Lead per project, whichever
+  seat Human started; treat them the same.
 - Advisor: provider `room-advisor` (Codex, gpt-6.1-sol), reads only, no
   orchestration tools. Lead consults it for second opinions and reviews; it
-  never leads, builds, or dispatches.
+  never leads, builds, or dispatches. The Grok Lead uses
+  `room-advisor-grok` (Grok Build, grok-4.7) in its place.
 - Peer (default): provider `room-peer-minimax` (OpenCode,
   MiniMax-M3.1-Flash). Every Peer, writable or read-only reviewer, is
   created with this provider unless an exception below applies.
